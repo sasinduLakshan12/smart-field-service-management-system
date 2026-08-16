@@ -1,5 +1,5 @@
 const express = require('express');
-const { createCategory, getCategories, createService, getServices, getService, updateService } = require('../controllers/serviceController');
+const { createCategory, getCategories, createService, getServices, getService, updateService, deleteService } = require('../controllers/serviceController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { enforceTenant } = require('../middleware/tenantMiddleware');
 const { cache, invalidateCache } = require('../middleware/cacheMiddleware');
@@ -31,6 +31,7 @@ router.route('/')
 
 router.route('/:id')
   .get(getService)
-  .put(authorize('company_admin'), clearServiceCache, updateService);
+  .put(authorize('company_admin'), clearServiceCache, updateService)
+  .delete(authorize('company_admin'), clearServiceCache, deleteService);
 
 module.exports = router;

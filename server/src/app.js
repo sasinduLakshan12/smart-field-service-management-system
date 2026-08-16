@@ -14,6 +14,8 @@ const billingRoutes = require('./routes/billingRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 
+const path = require('path');
+
 const app = express();
 
 // Security and utility middlewares
@@ -23,8 +25,11 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Serve static uploads
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // Routes
 app.use('/api/v1/auth', authRoutes);

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
+import { useThemeStore } from './store/themeStore';
 import Login from './pages/Login';
 import DashboardLayout from './layouts/DashboardLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -8,10 +9,16 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Page Components
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import CompanyAdminDashboard from './pages/CompanyAdminDashboard';
+import CompanyAdminTechnicians from './pages/CompanyAdminTechnicians';
+import CompanyAdminServices from './pages/CompanyAdminServices';
+import CompanyAdminWorkOrders from './pages/CompanyAdminWorkOrders';
 import DispatcherDashboard from './pages/DispatcherDashboard';
 import TechnicianDashboard from './pages/TechnicianDashboard';
 import CustomerDashboard from './pages/CustomerDashboard';
 import BookService from './pages/BookService';
+
+import Home from './pages/Home';
+import ApplyTechnician from './pages/ApplyTechnician';
 
 // Fallback Route Redirector depending on Role
 function RoleRedirector() {
@@ -37,16 +44,27 @@ function RoleRedirector() {
 
 function App() {
   const { checkAuth } = useAuthStore();
+  const { initTheme } = useThemeStore();
 
   useEffect(() => {
+    initTheme();
     checkAuth();
-  }, [checkAuth]);
+  }, [checkAuth, initTheme]);
 
   return (
     <Router>
       <Routes>
+        {/* Public Landing page */}
+        <Route path="/" element={<Home />} />
+
         {/* Public auth portal */}
         <Route path="/login" element={<Login />} />
+
+        {/* Public apply portal */}
+        <Route path="/apply" element={<ApplyTechnician />} />
+
+        {/* Dashboard Redirector */}
+        <Route path="/dashboard" element={<RoleRedirector />} />
 
         {/* Dashboard layouts wrapper */}
         <Route element={<DashboardLayout />}>
@@ -82,7 +100,7 @@ function App() {
             path="/admin/technicians"
             element={
               <ProtectedRoute allowedRoles={['company_admin']}>
-                <CompanyAdminDashboard />
+                <CompanyAdminTechnicians />
               </ProtectedRoute>
             }
           />
@@ -90,7 +108,7 @@ function App() {
             path="/admin/services"
             element={
               <ProtectedRoute allowedRoles={['company_admin']}>
-                <CompanyAdminDashboard />
+                <CompanyAdminServices />
               </ProtectedRoute>
             }
           />
@@ -98,7 +116,7 @@ function App() {
             path="/admin/work-orders"
             element={
               <ProtectedRoute allowedRoles={['company_admin']}>
-                <CompanyAdminDashboard />
+                <CompanyAdminWorkOrders />
               </ProtectedRoute>
             }
           />
@@ -141,9 +159,6 @@ function App() {
             }
           />
         </Route>
-
-        {/* Root Redirector */}
-        <Route path="/" element={<RoleRedirector />} />
         
         {/* Wildcard Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

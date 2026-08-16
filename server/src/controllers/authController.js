@@ -13,6 +13,9 @@ const generateAccessToken = (user) => {
 
 // Helper to generate refresh token
 const generateRefreshToken = async (user) => {
+  // Clear any existing refresh tokens for this user first
+  await RefreshToken.deleteMany({ user: user._id });
+
   const token = jwt.sign(
     { id: user._id },
     process.env.JWT_REFRESH_SECRET,

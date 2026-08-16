@@ -183,3 +183,29 @@ exports.updateService = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Delete service catalog item
+// @route   DELETE /api/v1/services/:id
+// @access  Private (Admin only)
+exports.deleteService = async (req, res, next) => {
+  try {
+    const filter = { _id: req.params.id, ...req.tenantFilter };
+    const service = await Service.findOne(filter);
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service not found'
+      });
+    }
+
+    await Service.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Service deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,36 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
+import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
+  const [isRegister, setIsRegister] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loading, error } = useAuthStore();
+
+  const { login, register, loading, error, user } = useAuthStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await login(email, password);
+    if (isRegister) {
+      await register(name, email, password, 'customer');
+    } else {
+      await login(email, password);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
-        <div className="p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Welcome Back</h2>
-            <p className="text-slate-500 mt-2 text-sm">Sign in to manage your workforce operations</p>
+    <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative neon blur blobs */}
+      <div className="absolute -top-24 -left-24 w-72 h-72 bg-brand/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-teal-400/5 rounded-full blur-3xl pointer-events-none"></div>
+
+      {/* Frosted Glass Login / Register Panel */}
+      <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-md rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] border border-slate-800/60 overflow-hidden relative z-10">
+        <div className="p-8 space-y-6">
+          <div className="text-center space-y-2">
+            {/* Back to Home Link */}
+            <Link 
+              to="/" 
+              className="inline-flex items-center gap-1.5 text-[10px] text-slate-500 hover:text-brand font-bold uppercase tracking-wider mb-1 transition-colors"
+            >
+              ← Back to Homepage
+            </Link>
+            {/* Logo */}
+            <div className="h-10 w-10 rounded-xl bg-brand flex items-center justify-center text-white font-black text-base mx-auto shadow-[0_0_16px_rgba(0,168,150,0.4)]">
+              F
+            </div>
+            <h2 className="text-2xl font-extrabold text-white tracking-tight pt-1">
+              {isRegister ? 'Create Account' : 'Welcome to FieldFlow'}
+            </h2>
+            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">
+              {isRegister ? 'Join the field service network' : 'Sign in to your workplace account'}
+            </p>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-6 flex items-center">
-              <span className="font-semibold mr-1">Error:</span> {error}
+            <div className="bg-red-950/20 border border-red-900/30 text-red-400 px-4 py-3 rounded-2xl text-xs flex items-center gap-2">
+              <span className="font-bold">Error:</span> {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {isRegister && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5" htmlFor="name">
+                  Full Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all duration-200"
+                  placeholder="e.g. Kamal Perera"
+                />
+              </div>
+            )}
+
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="email">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5" htmlFor="email">
                 Email Address
               </label>
               <input
@@ -39,13 +91,13 @@ export default function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
+                className="w-full px-4 py-3 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all duration-200"
                 placeholder="you@company.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="password">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5" htmlFor="password">
                 Password
               </label>
               <div className="relative">
@@ -55,15 +107,15 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-4 pr-12 py-3 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
+                  className="w-full pl-4 pr-12 py-3 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all duration-200"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
@@ -71,11 +123,25 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:shadow transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full mt-2 bg-brand hover:bg-brand-hover text-white font-bold py-3.5 px-4 rounded-xl text-xs shadow-[0_8px_16px_rgba(0,168,150,0.25)] hover:shadow-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Processing...' : isRegister ? 'Register' : 'Sign In'}
             </button>
           </form>
+
+          <div className="text-center pt-2">
+            <button
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setName('');
+                setEmail('');
+                setPassword('');
+              }}
+              className="text-xs text-slate-400 hover:text-white font-semibold transition-colors focus:outline-none"
+            >
+              {isRegister ? 'Already have an account? Sign In' : "Don't have an account? Create one"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

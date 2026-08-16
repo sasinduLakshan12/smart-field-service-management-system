@@ -136,3 +136,32 @@ exports.updateTechnician = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Delete technician profile and their User login record
+// @route   DELETE /api/v1/technicians/:id
+// @access  Private (Admin only)
+exports.deleteTechnician = async (req, res, next) => {
+  try {
+    const filter = { _id: req.params.id, ...req.tenantFilter };
+    const technician = await Technician.findOne(filter);
+
+    if (!technician) {
+      return res.status(404).json({
+        success: false,
+        message: 'Technician profile not found'
+      });
+    }
+
+    // Delete User login credential first
+    await User.findByIdAndDelete(technician.userId);
+    // Delete profile
+    await Technician.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Technician deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};

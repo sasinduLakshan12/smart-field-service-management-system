@@ -3,8 +3,18 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api/v1/auth';
 
+const getInitialUser = () => {
+  try {
+    const u = localStorage.getItem('user');
+    return u ? JSON.parse(u) : null;
+  } catch (e) {
+    localStorage.removeItem('user');
+    return null;
+  }
+};
+
 export const useAuthStore = create((set, get) => ({
-  user: JSON.parse(localStorage.getItem('user')) || null,
+  user: getInitialUser(),
   accessToken: localStorage.getItem('accessToken') || null,
   refreshToken: localStorage.getItem('refreshToken') || null,
   loading: false,
