@@ -159,3 +159,73 @@ exports.getWorkOrder = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Update Work Order status (Travelling, Arrived, In Progress, Completed, etc.)
+// @route   PATCH /api/v1/work-orders/:id/status
+// @access  Private (Technician/Admin/Dispatcher)
+exports.updateWorkOrderStatus = async (req, res, next) => {
+  try {
+    const { status, notes, parts, laborCost, attachments } = req.body;
+    const filter = { _id: req.params.id, ...req.tenantFilter };
+
+    // If technician, ensure they are the assigned technician
+    if (req.user.role === 'technician') {
+      const technician = await Technician.findOne({ userId: req.user._id, companyId: req.user.companyId });
+      if (!technician) {
+        return res.status(403).json({ success: false, message: 'Technician profile not found' });
+      }
+      filter.technicianId = technician._id;
+    }
+
+    const workOrder = await WorkOrder.findOne(filter);
+    if (!workOrder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Work order not found'
+      });
+    }
+
+    // Apply status update
+    if (status) {
+      workOrder.status = status;
+      
+      // Auto-set timestamps based on status
+      if (status === 'In Progress') {
+        workOrder.startTime = new Date();
+      } else if (status === 'Completed') {
+        workOrder.endTime = new Date();
+        
+        // Handle completion data and billing calculations
+        if (parts) {
+          workOrder.parts = parts;
+          workOrder.partsCost = parts.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        }
+        if (laborCost !== undefined) {
+          workOrder.laborCost = laborCost;
+        }
+        workOrder.totalCost = workOrder.partsCost + workOrder.laborCost;
+      }
+    }
+
+    if (notes) workOrder.notes = notes;
+    if (attachments) workOrder.attachments = attachments;
+
+    await workOrder.save();
+
+    // Sync status to the parent Service Request
+    const serviceRequest = await ServiceRequest.findById(workOrder.requestId);
+    if (serviceRequest) {
+      serviceRequest.status = status;
+      await serviceRequest.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Work Order status updated to ${status}`,
+      data: workOrder
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

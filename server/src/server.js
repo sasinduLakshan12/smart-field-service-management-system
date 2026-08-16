@@ -3,6 +3,7 @@ const http = require('http');
 const app = require('./app');
 const connectDB = require('./config/db');
 const { Server } = require('socket.io');
+const { socketHandler } = require('./sockets/socketHandler');
 
 const PORT = process.env.PORT || 5000;
 
@@ -21,13 +22,7 @@ const io = new Server(server, {
 });
 
 // Handle Socket.io Connections
-io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`);
-  
-  socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}`);
-  });
-});
+socketHandler(io);
 
 // Make io accessible across routes / controllers
 app.set('io', io);

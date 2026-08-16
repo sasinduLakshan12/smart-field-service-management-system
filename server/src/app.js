@@ -8,6 +8,11 @@ const technicianRoutes = require('./routes/technicianRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const serviceRequestRoutes = require('./routes/serviceRequestRoutes');
 const workOrderRoutes = require('./routes/workOrderRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const locationRoutes = require('./routes/locationRoutes');
+const billingRoutes = require('./routes/billingRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 
@@ -29,6 +34,11 @@ app.use('/api/v1/technicians', technicianRoutes);
 app.use('/api/v1/services', serviceRoutes);
 app.use('/api/v1/service-requests', serviceRequestRoutes);
 app.use('/api/v1/work-orders', workOrderRoutes);
+app.use('/api/v1/conversations', chatRoutes);
+app.use('/api/v1/locations', locationRoutes);
+app.use('/api/v1/billing', billingRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
 
 // Base health check endpoint
 app.get('/api/v1/health', (req, res) => {

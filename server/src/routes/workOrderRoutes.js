@@ -1,5 +1,5 @@
 const express = require('express');
-const { createWorkOrder, getWorkOrders, getWorkOrder } = require('../controllers/workOrderController');
+const { createWorkOrder, getWorkOrders, getWorkOrder, updateWorkOrderStatus } = require('../controllers/workOrderController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { enforceTenant } = require('../middleware/tenantMiddleware');
 
@@ -14,5 +14,7 @@ router.route('/')
 
 router.route('/:id')
   .get(getWorkOrder);
+
+router.patch('/:id/status', updateWorkOrderStatus);
 
 module.exports = router;
