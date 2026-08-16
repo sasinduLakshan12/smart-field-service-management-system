@@ -1,73 +1,154 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import Login from './pages/Login';
-import axios from 'axios';
+import DashboardLayout from './layouts/DashboardLayout';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Page Components
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import CompanyAdminDashboard from './pages/CompanyAdminDashboard';
+import DispatcherDashboard from './pages/DispatcherDashboard';
+import TechnicianDashboard from './pages/TechnicianDashboard';
+import CustomerDashboard from './pages/CustomerDashboard';
+import BookService from './pages/BookService';
+
+// Fallback Route Redirector depending on Role
+function RoleRedirector() {
+  const { user } = useAuthStore();
+
+  if (!user) return <Navigate to="/login" replace />;
+
+  switch (user.role) {
+    case 'super_admin':
+      return <Navigate to="/super-admin/dashboard" replace />;
+    case 'company_admin':
+      return <Navigate to="/admin/dashboard" replace />;
+    case 'dispatcher':
+      return <Navigate to="/dispatcher/dashboard" replace />;
+    case 'technician':
+      return <Navigate to="/technician/dashboard" replace />;
+    case 'customer':
+      return <Navigate to="/customer/dashboard" replace />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
+}
 
 function App() {
-  const { user, accessToken, logout, checkAuth } = useAuthStore();
-  const [companyInfo, setCompanyInfo] = useState(null);
+  const { checkAuth } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  useEffect(() => {
-    if (user && user.companyId) {
-      axios.get(`http://localhost:5000/api/v1/companies/${user.companyId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      })
-        .then(res => {
-          if (res.data.success && res.data.data) {
-            setCompanyInfo(res.data.data);
-          }
-        })
-        .catch(err => {
-          console.error("Failed to load tenant company information", err);
-        });
-    } else {
-      setCompanyInfo(null);
-    }
-  }, [user, accessToken]);
-
-  if (!user) {
-    return <Login />;
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-md overflow-hidden p-8 border border-slate-100">
-        <div className="text-center">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 mb-4 border border-emerald-100">
-            Authenticated Session ✅
-          </span>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-2">
-            Welcome, {user.name}
-          </h1>
-          <p className="text-slate-500 text-sm mb-6">
-            Role: <span className="font-semibold text-slate-700 capitalize">{user.role}</span>
-          </p>
+    <Router>
+      <Routes>
+        {/* Public auth portal */}
+        <Route path="/login" element={<Login />} />
 
-          <div className="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-100 text-left text-xs space-y-2">
-            <div><span className="font-bold text-slate-600">User ID:</span> {user.id}</div>
-            <div><span className="font-bold text-slate-600">Email:</span> {user.email}</div>
-            <div><span className="font-bold text-slate-600">Tenant:</span> {companyInfo ? `${companyInfo.name} (${companyInfo.subscriptionStatus} plan)` : 'Platform Level (No Tenant)'}</div>
-            {companyInfo && (
-              <>
-                <div><span className="font-bold text-slate-600">Company Contact:</span> {companyInfo.email} | {companyInfo.phone || 'N/A'}</div>
-                <div><span className="font-bold text-slate-600">Local Currency:</span> {companyInfo.settings?.currency || 'LKR'}</div>
-              </>
-            )}
-          </div>
+        {/* Dashboard layouts wrapper */}
+        <Route element={<DashboardLayout />}>
+          
+          {/* Super Admin Dashboard routes */}
+          <Route
+            path="/super-admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/super-admin/companies"
+            element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
 
-          <button
-            onClick={logout}
-            className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2.5 px-4 rounded-lg transition-colors border border-red-200"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
-    </div>
+          {/* Company Admin Dashboard routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['company_admin']}>
+                <CompanyAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/technicians"
+            element={
+              <ProtectedRoute allowedRoles={['company_admin']}>
+                <CompanyAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/services"
+            element={
+              <ProtectedRoute allowedRoles={['company_admin']}>
+                <CompanyAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/work-orders"
+            element={
+              <ProtectedRoute allowedRoles={['company_admin']}>
+                <CompanyAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Dispatcher Dashboard routes */}
+          <Route
+            path="/dispatcher/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['dispatcher']}>
+                <DispatcherDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Technician Dashboard routes */}
+          <Route
+            path="/technician/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['technician']}>
+                <TechnicianDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Customer Dashboard routes */}
+          <Route
+            path="/customer/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['customer']}>
+                <CustomerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/request"
+            element={
+              <ProtectedRoute allowedRoles={['customer']}>
+                <BookService />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        {/* Root Redirector */}
+        <Route path="/" element={<RoleRedirector />} />
+        
+        {/* Wildcard Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   );
 }
 

@@ -43,6 +43,7 @@ exports.protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.error('JWT Verification Error details:', error.message);
     return res.status(401).json({
       success: false,
       message: 'Not authorized to access this route'
