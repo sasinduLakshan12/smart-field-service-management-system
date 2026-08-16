@@ -13,9 +13,10 @@ import {
   Power, 
   FileText, 
   ExternalLink,
-  ClipboardList,
   Check,
-  X
+  X,
+  Search,
+  Filter
 } from 'lucide-react';
 
 export default function CompanyAdminTechnicians() {
@@ -27,6 +28,10 @@ export default function CompanyAdminTechnicians() {
   const [showModal, setShowModal] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
+
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [skillFilter, setSkillFilter] = useState('All');
 
   // Form State for manual entry
   const [name, setName] = useState('');
@@ -150,6 +155,23 @@ export default function CompanyAdminTechnicians() {
     }
   };
 
+  // Filter technicians based on search query and selected skill
+  const getFilteredTechnicians = () => {
+    return technicians.filter(tech => {
+      const matchesSearch = 
+        tech.userId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tech.userId?.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesSkill = 
+        skillFilter === 'All' || 
+        tech.skills.some(skill => skill.toLowerCase() === skillFilter.toLowerCase());
+
+      return matchesSearch && matchesSkill;
+    });
+  };
+
+  const skillOptions = ['All', 'AC Repair', 'Plumbing', 'Electrical', 'Generator Repair', 'Appliance Repair'];
+
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
@@ -188,28 +210,61 @@ export default function CompanyAdminTechnicians() {
         </div>
       )}
 
-      {/* Tab Switcher */}
-      <div className="flex gap-2 p-1 bg-slate-950/40 border border-slate-900/60 rounded-xl w-fit relative z-10">
-        <button
-          onClick={() => setActiveTab('directory')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'directory' 
-              ? 'bg-brand text-white shadow-md' 
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          Active Directory ({technicians.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('applications')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'applications' 
-              ? 'bg-brand text-white shadow-md' 
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          Join Requests ({applications.length})
-        </button>
+      {/* Tab Switcher & Search Bar Panel */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
+        <div className="flex gap-2 p-1 bg-slate-950/40 border border-slate-900/60 rounded-xl w-fit">
+          <button
+            onClick={() => setActiveTab('directory')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'directory' 
+                ? 'bg-brand text-white shadow-md' 
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Active Directory ({technicians.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('applications')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'applications' 
+                ? 'bg-brand text-white shadow-md' 
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Join Requests ({applications.length})
+          </button>
+        </div>
+
+        {/* Search & Filter Controls (only show in Directory tab) */}
+        {activeTab === 'directory' && (
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            {/* Search Input */}
+            <div className="relative flex-1 md:flex-initial">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search technician..."
+                className="w-full md:w-56 pl-9 pr-4 py-2 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all"
+              />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            </div>
+
+            {/* Filter Dropdown */}
+            <div className="relative flex items-center gap-1.5 bg-slate-950/40 border border-slate-800/60 rounded-xl px-2 py-1">
+              <Filter size={12} className="text-slate-500" />
+              <select
+                value={skillFilter}
+                onChange={(e) => setSkillFilter(e.target.value)}
+                className="bg-transparent border-none text-xs text-slate-300 focus:outline-none py-1 cursor-pointer"
+              >
+                {skillOptions.map(skill => (
+                  <option key={skill} value={skill} className="bg-slate-900 text-white text-xs">{skill}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* DIRECTORY TAB VIEW */}
@@ -227,61 +282,69 @@ export default function CompanyAdminTechnicians() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-900/40 text-slate-300">
-              {technicians.map((tech) => (
-                <tr key={tech._id} className="hover:bg-slate-950/20 transition-colors duration-150">
-                  <td className="p-4 pl-6 font-bold text-slate-200 flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-lg bg-brand-light text-brand flex items-center justify-center font-bold text-xs">
-                      {tech.userId?.name?.slice(0, 2).toUpperCase()}
-                    </div>
-                    {tech.userId?.name}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-1.5 text-slate-400 font-medium">
-                      <Mail size={12} className="text-slate-500" />
-                      {tech.userId?.email}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-1.5 text-slate-400 font-medium capitalize">
-                      <Briefcase size={12} className="text-slate-500" />
-                      {tech.skills.join(', ')}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold border capitalize ${
-                      tech.availabilityStatus === 'available'
-                        ? 'bg-brand-light text-brand border-brand/20'
-                        : 'bg-amber-950/30 text-amber-500 border-amber-500/20'
-                    }`}>
-                      {tech.availabilityStatus}
-                    </span>
-                  </td>
-                  <td className="p-4 font-bold text-slate-300">
-                    <div className="flex items-center gap-1">
-                      <Star size={14} className="fill-amber-400 text-amber-400" />
-                      5.0 <span className="text-[10px] text-slate-500 font-normal">(0 reviews)</span>
-                    </div>
-                  </td>
-                  <td className="p-4 pr-6 text-center">
-                    <div className="flex justify-center items-center gap-2">
-                      <button
-                        onClick={() => handleToggleStatus(tech._id, tech.availabilityStatus)}
-                        title="Toggle availability"
-                        className="p-1.5 rounded-lg bg-slate-950/40 border border-slate-800/60 hover:bg-brand/20 text-slate-400 hover:text-brand transition-colors"
-                      >
-                        <Power size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(tech._id)}
-                        title="Remove technician"
-                        className="p-1.5 rounded-lg bg-slate-950/40 border border-slate-800/60 hover:bg-red-950/30 text-slate-400 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+              {getFilteredTechnicians().length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-12 text-slate-500 font-semibold">
+                    No technicians found matching the criteria.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                getFilteredTechnicians().map((tech) => (
+                  <tr key={tech._id} className="hover:bg-slate-950/20 transition-colors duration-150">
+                    <td className="p-4 pl-6 font-bold text-slate-200 flex items-center gap-2.5">
+                      <div className="h-8 w-8 rounded-lg bg-brand-light text-brand flex items-center justify-center font-bold text-xs">
+                        {tech.userId?.name?.slice(0, 2).toUpperCase()}
+                      </div>
+                      {tech.userId?.name}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-1.5 text-slate-400 font-medium">
+                        <Mail size={12} className="text-slate-500" />
+                        {tech.userId?.email}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-1.5 text-slate-400 font-medium capitalize">
+                        <Briefcase size={12} className="text-slate-500" />
+                        {tech.skills.join(', ')}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold border capitalize ${
+                        tech.availabilityStatus === 'available'
+                          ? 'bg-brand-light text-brand border-brand/20'
+                          : 'bg-amber-950/30 text-amber-500 border-amber-500/20'
+                      }`}>
+                        {tech.availabilityStatus}
+                      </span>
+                    </td>
+                    <td className="p-4 font-bold text-slate-300">
+                      <div className="flex items-center gap-1">
+                        <Star size={14} className="fill-amber-400 text-amber-400" />
+                        5.0 <span className="text-[10px] text-slate-500 font-normal">(0 reviews)</span>
+                      </div>
+                    </td>
+                    <td className="p-4 pr-6 text-center">
+                      <div className="flex justify-center items-center gap-2">
+                        <button
+                          onClick={() => handleToggleStatus(tech._id, tech.availabilityStatus)}
+                          title="Toggle availability"
+                          className="p-1.5 rounded-lg bg-slate-950/40 border border-slate-800/60 hover:bg-brand/20 text-slate-400 hover:text-brand transition-colors"
+                        >
+                          <Power size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(tech._id)}
+                          title="Remove technician"
+                          className="p-1.5 rounded-lg bg-slate-950/40 border border-slate-800/60 hover:bg-red-950/30 text-slate-400 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -375,7 +438,6 @@ export default function CompanyAdminTechnicians() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              {/* Form fields ... */}
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                   Full Name

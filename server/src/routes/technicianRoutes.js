@@ -35,7 +35,7 @@ router.route('/applications/:id')
 // 3. CORE TECHNICIANS OPERATIONS
 router.route('/')
   .post(authorize('company_admin'), createTechnician)
-  .get(authorize('company_admin', 'dispatcher'), getTechnicians);
+  .get(authorize('company_admin', 'dispatcher', 'technician'), getTechnicians);
 
 router.route('/:id')
   .get(getTechnician)

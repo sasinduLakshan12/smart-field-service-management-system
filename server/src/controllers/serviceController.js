@@ -1,5 +1,7 @@
 const Service = require('../models/Service');
 const ServiceCategory = require('../models/ServiceCategory');
+const fs = require('fs');
+const path = require('path');
 
 // @desc    Create a new service category
 // @route   POST /api/v1/services/categories
@@ -53,15 +55,30 @@ exports.getCategories = async (req, res, next) => {
 // @access  Private (Admin)
 exports.createService = async (req, res, next) => {
   try {
-    const { name, description, price, estimatedDuration, categoryId, requiredSkills } = req.body;
+    const { name, description, price, estimatedDuration, duration, categoryId, requiredSkills, imageName, imageData } = req.body;
 
-    // Verify category exists under same tenant
-    const category = await ServiceCategory.findOne({ _id: categoryId, companyId: req.user.companyId });
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: 'Category not found or does not belong to this company'
-      });
+    const actualDuration = estimatedDuration || duration || 60;
+
+    let targetCategoryId = categoryId;
+    if (!targetCategoryId) {
+      // Find or create default category to ensure service gets resolved
+      let category = await ServiceCategory.findOne({ name: 'General Services', companyId: req.user.companyId });
+      if (!category) {
+        category = await ServiceCategory.create({
+          name: 'General Services',
+          description: 'Default category for company services',
+          companyId: req.user.companyId
+        });
+      }
+      targetCategoryId = category._id;
+    } else {
+      const categoryExists = await ServiceCategory.findOne({ _id: targetCategoryId, companyId: req.user.companyId });
+      if (!categoryExists) {
+        return res.status(404).json({
+          success: false,
+          message: 'Category not found or does not belong to this company'
+        });
+      }
     }
 
     const serviceExists = await Service.findOne({ name, companyId: req.user.companyId });
@@ -72,14 +89,32 @@ exports.createService = async (req, res, next) => {
       });
     }
 
+    // Process cover image upload if present
+    let imageUrl;
+    if (imageData && imageName) {
+      const uploadDir = path.join(__dirname, '../../public/uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const uniqueFileName = `service_${Date.now()}_${imageName.replace(/\s+/g, '_')}`;
+      const filePath = path.join(uploadDir, uniqueFileName);
+      
+      const base64Data = imageData.split(';base64,').pop();
+      const buffer = Buffer.from(base64Data, 'base64');
+      fs.writeFileSync(filePath, buffer);
+      
+      imageUrl = `http://localhost:5000/uploads/${uniqueFileName}`;
+    }
+
     const service = await Service.create({
       name,
       description,
       price,
-      estimatedDuration,
-      categoryId,
+      estimatedDuration: actualDuration,
+      categoryId: targetCategoryId,
       requiredSkills,
-      companyId: req.user.companyId
+      companyId: req.user.companyId,
+      imageUrl
     });
 
     res.status(201).json({
@@ -106,6 +141,22 @@ exports.getServices = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'Services retrieved successfully',
+      data: services
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get all public services (no auth required)
+// @route   GET /api/v1/services/public
+// @access  Public
+exports.getPublicServices = async (req, res, next) => {
+  try {
+    const services = await Service.find().populate('companyId', 'name');
+    res.status(200).json({
+      success: true,
+      message: 'Public services retrieved successfully',
       data: services
     });
   } catch (error) {
@@ -153,7 +204,31 @@ exports.updateService = async (req, res, next) => {
       });
     }
 
-    const { name, description, price, estimatedDuration, categoryId, requiredSkills } = req.body;
+    const { name, description, price, estimatedDuration, duration, categoryId, requiredSkills, imageName, imageData } = req.body;
+
+    if (name) service.name = name;
+    if (description !== undefined) service.description = description;
+    if (price !== undefined) service.price = price;
+    if (estimatedDuration !== undefined || duration !== undefined) {
+      service.estimatedDuration = estimatedDuration || duration;
+    }
+    if (requiredSkills !== undefined) service.requiredSkills = requiredSkills;
+
+    // Process cover image upload if present
+    if (imageData && imageName) {
+      const uploadDir = path.join(__dirname, '../../public/uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const uniqueFileName = `service_${Date.now()}_${imageName.replace(/\s+/g, '_')}`;
+      const filePath = path.join(uploadDir, uniqueFileName);
+      
+      const base64Data = imageData.split(';base64,').pop();
+      const buffer = Buffer.from(base64Data, 'base64');
+      fs.writeFileSync(filePath, buffer);
+      
+      service.imageUrl = `http://localhost:5000/uploads/${uniqueFileName}`;
+    }
 
     if (categoryId) {
       const category = await ServiceCategory.findOne({ _id: categoryId, companyId: req.user.companyId });
@@ -165,12 +240,6 @@ exports.updateService = async (req, res, next) => {
       }
       service.categoryId = categoryId;
     }
-
-    if (name) service.name = name;
-    if (description) service.description = description;
-    if (price !== undefined) service.price = price;
-    if (estimatedDuration !== undefined) service.estimatedDuration = estimatedDuration;
-    if (requiredSkills) service.requiredSkills = requiredSkills;
 
     await service.save();
 
@@ -184,13 +253,13 @@ exports.updateService = async (req, res, next) => {
   }
 };
 
-// @desc    Delete service catalog item
+// @desc    Delete service
 // @route   DELETE /api/v1/services/:id
-// @access  Private (Admin only)
+// @access  Private (Admin)
 exports.deleteService = async (req, res, next) => {
   try {
     const filter = { _id: req.params.id, ...req.tenantFilter };
-    const service = await Service.findOne(filter);
+    const service = await Service.findOneAndDelete(filter);
 
     if (!service) {
       return res.status(404).json({
@@ -198,8 +267,6 @@ exports.deleteService = async (req, res, next) => {
         message: 'Service not found'
       });
     }
-
-    await Service.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,

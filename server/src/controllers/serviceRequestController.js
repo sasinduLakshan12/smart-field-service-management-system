@@ -1,6 +1,9 @@
 const ServiceRequest = require('../models/ServiceRequest');
 const Customer = require('../models/Customer');
 const Service = require('../models/Service');
+const Technician = require('../models/Technician');
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
 
 // @desc    Submit a service request
 // @route   POST /api/v1/service-requests
@@ -40,6 +43,50 @@ exports.createRequest = async (req, res, next) => {
       address,
       additionalNotes
     });
+
+    // Notify matching technicians immediately (Uber/gig matching flow)
+    try {
+      const requiredSkills = service.requiredSkills || [];
+      const matchingTechs = await Technician.find({
+        companyId: req.user.companyId,
+        skills: { $in: requiredSkills },
+        availabilityStatus: 'available'
+      });
+
+      for (const tech of matchingTechs) {
+        let conversation = await Conversation.findOne({
+          companyId: req.user.companyId,
+          participants: { $all: [req.user._id, tech.userId] }
+        });
+
+        if (!conversation) {
+          conversation = await Conversation.create({
+            participants: [req.user._id, tech.userId],
+            companyId: req.user.companyId
+          });
+        }
+
+        const msgText = `📢 NEW AVAILABLE JOB MATCHING YOUR SKILLS:\nService: ${service.name}\nDetails: ${problemDescription || 'No description'}\nPreferred Date: ${preferredDate ? new Date(preferredDate).toLocaleDateString() : 'Flexible'}\nAddress: ${address}\nPriority: ${priority || 'Normal'}`;
+        const message = await Message.create({
+          conversationId: conversation._id,
+          senderId: req.user._id,
+          text: msgText
+        });
+
+        conversation.lastMessage = message._id;
+        await conversation.save();
+
+        const io = req.app.get('io');
+        if (io) {
+          io.to(tech.userId.toString()).emit('newMessage', {
+            conversationId: conversation._id,
+            message
+          });
+        }
+      }
+    } catch (matchErr) {
+      console.error('Failed to broad-notify matching technicians:', matchErr);
+    }
 
     res.status(201).json({
       success: true,

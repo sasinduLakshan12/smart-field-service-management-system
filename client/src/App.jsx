@@ -19,6 +19,7 @@ import BookService from './pages/BookService';
 
 import Home from './pages/Home';
 import ApplyTechnician from './pages/ApplyTechnician';
+import TechnicianProfile from './pages/TechnicianProfile';
 
 // Fallback Route Redirector depending on Role
 function RoleRedirector() {
@@ -137,6 +138,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['technician']}>
                 <TechnicianDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/technician/profile"
+            element={
+              <ProtectedRoute allowedRoles={['technician']}>
+                <TechnicianProfile />
               </ProtectedRoute>
             }
           />

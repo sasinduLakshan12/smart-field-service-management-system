@@ -2,6 +2,8 @@ const WorkOrder = require('../models/WorkOrder');
 const ServiceRequest = require('../models/ServiceRequest');
 const Technician = require('../models/Technician');
 const Customer = require('../models/Customer');
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
 
 // @desc    Assign technician and create Work Order
 // @route   POST /api/v1/work-orders
@@ -58,6 +60,42 @@ exports.createWorkOrder = async (req, res, next) => {
       scheduledDate,
       notes
     });
+
+    // Create automated chat notification for Technician
+    try {
+      let conversation = await Conversation.findOne({
+        companyId: req.user.companyId,
+        participants: { $all: [req.user._id, technician.userId] }
+      });
+
+      if (!conversation) {
+        conversation = await Conversation.create({
+          participants: [req.user._id, technician.userId],
+          companyId: req.user.companyId
+        });
+      }
+
+      const msgText = `🔔 NEW WORK ORDER ASSIGNED:\nService: ${serviceRequest.serviceId.name}\nScheduled Date: ${new Date(scheduledDate).toLocaleDateString()}\nNotes: ${notes || 'No notes provided'}`;
+      const message = await Message.create({
+        conversationId: conversation._id,
+        senderId: req.user._id,
+        text: msgText
+      });
+
+      conversation.lastMessage = message._id;
+      await conversation.save();
+
+      // Emit socket notification to technician user room
+      const io = req.app.get('io');
+      if (io) {
+        io.to(technician.userId.toString()).emit('newMessage', {
+          conversationId: conversation._id,
+          message
+        });
+      }
+    } catch (chatErr) {
+      console.error('Failed to create job assignment chat notification:', chatErr);
+    }
 
     // Update ServiceRequest status
     serviceRequest.status = 'Assigned';

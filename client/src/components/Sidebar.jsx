@@ -36,6 +36,7 @@ export default function Sidebar() {
       case 'technician':
         return [
           { to: '/technician/dashboard', label: 'My Tasks', icon: ClipboardList },
+          { to: '/technician/profile', label: 'My Profile', icon: Users },
         ];
       case 'customer':
         return [
