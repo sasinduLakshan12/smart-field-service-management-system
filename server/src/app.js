@@ -3,6 +3,11 @@ const cors = require('cors');
 const helmet = require('helmet');
 const authRoutes = require('./routes/authRoutes');
 const companyRoutes = require('./routes/companyRoutes');
+const customerRoutes = require('./routes/customerRoutes');
+const technicianRoutes = require('./routes/technicianRoutes');
+const serviceRoutes = require('./routes/serviceRoutes');
+const serviceRequestRoutes = require('./routes/serviceRequestRoutes');
+const workOrderRoutes = require('./routes/workOrderRoutes');
 
 const app = express();
 
@@ -19,6 +24,11 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/companies', companyRoutes);
+app.use('/api/v1/customers', customerRoutes);
+app.use('/api/v1/technicians', technicianRoutes);
+app.use('/api/v1/services', serviceRoutes);
+app.use('/api/v1/service-requests', serviceRequestRoutes);
+app.use('/api/v1/work-orders', workOrderRoutes);
 
 // Base health check endpoint
 app.get('/api/v1/health', (req, res) => {
