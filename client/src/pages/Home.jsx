@@ -330,7 +330,7 @@ export default function Home() {
       style={{ backgroundImage: "url('/landing_bg.jpg')" }}
     >
       {/* Heavy dark mask overlay for high readability contrast */}
-      <div className="absolute inset-0 bg-slate-955/92 backdrop-blur-md z-0"></div>
+      <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-[3px] z-0"></div>
 
       <div className="relative z-10 flex flex-col justify-between min-h-screen">
         
@@ -570,7 +570,7 @@ export default function Home() {
               </div>
               <button 
                 onClick={() => setShowBookModal(false)}
-                className="text-slate-400 hover:text-white p-1 bg-slate-955 rounded-lg border border-slate-850 hover:bg-slate-900 transition-all"
+                className="text-slate-400 hover:text-white p-1 bg-slate-950 rounded-lg border border-slate-800 hover:bg-slate-900 transition-all"
               >
                 <X size={16} />
               </button>
@@ -738,8 +738,8 @@ export default function Home() {
                           booking.status === 'Completed'
                             ? 'bg-brand-light text-brand border-brand/20'
                             : booking.status === 'Assigned'
-                            ? 'bg-sky-955/20 text-sky-400 border-sky-505/20'
-                            : 'bg-slate-955/30 text-slate-400 border-slate-550/20'
+                            ? 'bg-sky-950/20 text-sky-400 border-sky-500/20'
+                            : 'bg-slate-950/30 text-slate-400 border-slate-500/20'
                         }`}>
                           {booking.status}
                         </span>
@@ -765,7 +765,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="p-5 bg-slate-955/35 border-t border-slate-800 flex justify-end">
+            <div className="p-5 bg-slate-950/35 border-t border-slate-800 flex justify-end">
               <button
                 onClick={() => setShowMyBookings(false)}
                 className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 rounded-xl text-xs font-bold transition-all"
@@ -779,7 +779,7 @@ export default function Home() {
 
       {/* 3. REAL-TIME LIVE DISPATCH TRACKING MODAL */}
       {showTracking && trackingBooking && (
-        <div className="fixed inset-0 bg-slate-955/75 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="max-w-xl w-full bg-slate-900/95 backdrop-blur-md rounded-[32px] shadow-2xl border border-slate-800 overflow-hidden text-slate-200 relative">
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand to-transparent"></div>
             
@@ -797,7 +797,7 @@ export default function Home() {
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-3 gap-4 bg-slate-955/60 p-4 rounded-2xl border border-slate-850 text-center">
+              <div className="grid grid-cols-3 gap-4 bg-slate-950/60 p-4 rounded-2xl border border-slate-850 text-center">
                 <div>
                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Status</p>
                   <p className="text-xs font-bold text-brand mt-0.5 animate-pulse">En Route</p>
@@ -814,19 +814,19 @@ export default function Home() {
 
               <div 
                 id="tracking-map-container" 
-                className="h-64 w-full rounded-2xl border border-slate-800 bg-slate-955 overflow-hidden z-10 relative shadow-inner"
+                className="h-64 w-full rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden z-10 relative shadow-inner"
               ></div>
 
-              <div className="text-[10px] text-slate-350 font-semibold leading-relaxed bg-slate-955/40 p-3.5 rounded-xl border border-slate-800 flex items-center gap-2">
+              <div className="text-[10px] text-slate-350 font-semibold leading-relaxed bg-slate-950/40 p-3.5 rounded-xl border border-slate-800 flex items-center gap-2">
                 <CheckCircle size={14} className="text-brand shrink-0" />
                 <span>Simulating live GPS telemetry updates from the technician's mobile console device towards Galle Road destination.</span>
               </div>
             </div>
 
-            <div className="p-5 bg-slate-955/35 border-t border-slate-800 flex justify-end">
+            <div className="p-5 bg-slate-950/35 border-t border-slate-800 flex justify-end">
               <button
                 onClick={() => setShowTracking(false)}
-                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-855 text-slate-200 rounded-xl text-xs font-bold transition-all"
+                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 rounded-xl text-xs font-bold transition-all"
               >
                 Dismiss Tracking
               </button>
