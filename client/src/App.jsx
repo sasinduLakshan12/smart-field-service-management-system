@@ -37,7 +37,7 @@ function RoleRedirector() {
     case 'technician':
       return <Navigate to="/technician/dashboard" replace />;
     case 'customer':
-      return <Navigate to="/customer/dashboard" replace />;
+      return <Navigate to="/" replace />;
     default:
       return <Navigate to="/login" replace />;
   }
