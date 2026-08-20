@@ -77,8 +77,8 @@ export default function TechnicianDashboard() {
         }
       }
 
-      // 3. Fetch all available pending requests
-      const reqResponse = await axios.get('http://localhost:5000/api/v1/service-requests?status=Pending', {
+      // 3. Fetch all available requests
+      const reqResponse = await axios.get('http://localhost:5000/api/v1/service-requests', {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       if (reqResponse.data.success) {
@@ -304,14 +304,20 @@ export default function TechnicianDashboard() {
             <ClipboardList size={18} />
             <h3 className="font-extrabold text-sm text-white">Available Jobs Pool</h3>
           </div>
-          {availableRequests.filter(req => req.serviceId?.requiredSkills?.some(skill => profile.skills?.includes(skill))).length === 0 ? (
+          {availableRequests.filter(req => 
+            (req.status === 'Pending' || req.status === 'Reviewed') &&
+            req.serviceId?.requiredSkills?.some(skill => profile.skills?.map(s => s.toLowerCase()).includes(skill.toLowerCase()))
+          ).length === 0 ? (
             <div className="bg-slate-900/20 backdrop-blur-md rounded-3xl border border-slate-800/40 p-5 text-center text-slate-500 text-xs font-semibold">
               No matching open jobs available in the pool right now.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {availableRequests
-                .filter(req => req.serviceId?.requiredSkills?.some(skill => profile.skills?.includes(skill)))
+                .filter(req => 
+                  (req.status === 'Pending' || req.status === 'Reviewed') &&
+                  req.serviceId?.requiredSkills?.some(skill => profile.skills?.map(s => s.toLowerCase()).includes(skill.toLowerCase()))
+                )
                 .map((req) => (
                   <div key={req._id} className="bg-slate-900/40 backdrop-blur-md rounded-3xl border border-slate-800/60 p-5 space-y-3.5 flex flex-col justify-between shadow-lg">
                     <div className="space-y-2">

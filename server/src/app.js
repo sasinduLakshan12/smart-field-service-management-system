@@ -45,6 +45,61 @@ app.use('/api/v1/billing', billingRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 
+// Public Geocoding search proxy to bypass frontend CORS blocks
+app.get('/api/v1/geocode/search', (req, res) => {
+  const { q } = req.query;
+  if (!q) {
+    return res.status(200).json([]);
+  }
+  
+  const https = require('https');
+  // Use Photon by Komoot (free, fast, no rate-limits geocoding search for OSM data)
+  const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5`;
+  
+  https.get(url, (apiRes) => {
+    let data = '';
+    apiRes.on('data', (chunk) => {
+      data += chunk;
+    });
+    apiRes.on('end', () => {
+      try {
+        const parsed = JSON.parse(data);
+        const features = parsed.features || [];
+        
+        // Filter strictly for Sri Lanka results (countrycode: 'LK')
+        const lkFeatures = features.filter(f => f.properties?.countrycode?.toUpperCase() === 'LK');
+        
+        const formatted = lkFeatures.map(f => {
+          const props = f.properties || {};
+          const coords = f.geometry?.coordinates || [0, 0];
+          
+          // Compile a readable address string
+          const parts = [
+            props.name,
+            props.street,
+            props.city || props.town || props.county,
+            props.state,
+            props.country
+          ].filter(Boolean);
+          
+          return {
+            place_id: `${props.osm_type || 'W'}-${props.osm_id || Math.random()}`,
+            display_name: parts.join(', '),
+            lat: coords[1], // Latitude is second in GeoJSON coordinates array [lng, lat]
+            lon: coords[0]  // Longitude is first
+          };
+        });
+        res.status(200).json(formatted);
+      } catch (e) {
+        res.status(200).json([]);
+      }
+    });
+  }).on('error', (err) => {
+    console.error('Photon proxy search error:', err.message);
+    res.status(200).json([]);
+  });
+});
+
 // Base health check endpoint
 app.get('/api/v1/health', (req, res) => {
   res.status(200).json({

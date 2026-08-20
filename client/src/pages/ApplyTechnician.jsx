@@ -51,16 +51,14 @@ export default function ApplyTechnician() {
     }
     
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&limit=5&countrycodes=lk`, {
-        headers: { 'Accept-Language': 'en' }
-      });
+      const response = await fetch(`http://localhost:5000/api/v1/geocode/search?q=${encodeURIComponent(val)}`);
       const data = await response.json();
-      if (data) {
+      if (Array.isArray(data)) {
         setSuggestions(data);
         setShowSuggestions(true);
       }
     } catch (err) {
-      console.error('Failed to fetch address suggestions', err);
+      console.error('Failed to fetch address suggestions via proxy', err);
     }
   };
 
@@ -401,10 +399,12 @@ export default function ApplyTechnician() {
               <input
                 type="text"
                 required
+                name="tech-home-address-field-unique"
+                autoComplete="off"
                 value={address}
                 onChange={(e) => handleAddressChange(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand/20"
-                placeholder="Type location (e.g. Vavuniya) or drag marker"
+                placeholder="Type location (e.g. Colombo, Vavuniya) or drag marker"
               />
               <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand" />
 
