@@ -3,6 +3,16 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { Briefcase, PlusCircle, CheckCircle, ShieldAlert, Clock, Trash2, Edit2, Search, Filter, UploadCloud, X } from 'lucide-react';
 
+const predefinedServices = [
+  { name: 'AC Repair & Maintenance', skill: 'AC Repair', desc: 'Comprehensive diagnostics, coil cleaning, gas charging, and general AC servicing.' },
+  { name: 'AC Installation', skill: 'AC Repair', desc: 'Professional wall mount split unit installation and copper pipe insulation.' },
+  { name: 'Plumbing & Leak Repair', skill: 'Plumbing', desc: 'Fixing pipeline water leakages, tap replacements, toilet line blockages, and valve fixes.' },
+  { name: 'Water Pump Repair', skill: 'Plumbing', desc: 'Repairing pressure pumps, automatic switch adjustments, motor winding, and pump impeller fixes.' },
+  { name: 'Electrical Rewiring & Fixes', skill: 'Electrical', desc: 'Resolving short circuits, replacement of trip switches, DB board rewiring, and socket installations.' },
+  { name: 'Generator Diagnostics & Repair', skill: 'Generator Repair', desc: 'Troubleshooting startup failures, alternator repair, oil filter changing, and engine tuning.' },
+  { name: 'Home Appliance Repair', skill: 'Appliance Repair', desc: 'Washing machine repair, refrigerator cooling diagnostics, microwave oven fixes, and electric cooker repairs.' }
+];
+
 export default function CompanyAdminServices() {
   const { accessToken } = useAuthStore();
   const [services, setServices] = useState([]);
@@ -181,6 +191,29 @@ export default function CompanyAdminServices() {
     }
   };
 
+  const getServiceImage = (service) => {
+    if (service.imageUrl && service.imageUrl.trim() !== '' && !service.imageUrl.includes('photo-1504307651254-35680f356dfd')) return service.imageUrl;
+
+    const skills = service.requiredSkills?.map(s => s.toLowerCase()) || [];
+
+    if (skills.includes('ac repair') || skills.includes('ac')) {
+      return '/images/ac_service.jpg';
+    }
+    if (skills.includes('plumbing') || skills.includes('plumb')) {
+      return '/images/plumbing_service.jpg';
+    }
+    if (skills.includes('electrical') || skills.includes('elect')) {
+      return '/images/electrical_service.jpg';
+    }
+    if (skills.includes('generator repair') || skills.includes('generator')) {
+      return '/images/generator_service.jpg';
+    }
+    if (skills.includes('appliance repair') || skills.includes('appliance')) {
+      return '/images/appliance_service.jpg';
+    }
+    return '/images/ac_service.jpg';
+  };
+
   const getFilteredServices = () => {
     return services.filter(service => {
       const matchesSearch = 
@@ -279,7 +312,7 @@ export default function CompanyAdminServices() {
               {/* Header Image */}
               <div className="h-32 w-full overflow-hidden relative">
                 <img 
-                  src={service.imageUrl || 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80'} 
+                  src={getServiceImage(service)} 
                   alt={service.name} 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 />
@@ -318,13 +351,10 @@ export default function CompanyAdminServices() {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-3 border-t border-slate-850 text-[11px] text-slate-500 font-bold">
-                  <div className="flex items-center gap-1">
-                    <Clock size={14} className="text-slate-500" />
-                    <span className="text-slate-400">{service.estimatedDuration || service.duration || 60} mins</span>
-                  </div>
-                  <div className="text-brand text-xs font-black">
-                    LKR {service.price}
+                <div className="flex justify-between items-center pt-3 border-t border-slate-800/20 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  <span className="text-slate-400">On-site Estimate</span>
+                  <div className="text-brand text-xs font-black normal-case">
+                    Base Fee: LKR {service.price}
                   </div>
                 </div>
               </div>
@@ -347,14 +377,25 @@ export default function CompanyAdminServices() {
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                   Service Name
                 </label>
-                <input
-                  type="text"
+                <select
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setName(val);
+                    const selected = predefinedServices.find(s => s.name === val);
+                    if (selected) {
+                      setRequiredSkill(selected.skill);
+                      setDescription(selected.desc);
+                    }
+                  }}
                   className="w-full px-3 py-2 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand/20"
-                  placeholder="e.g. Standard Aircon Repair"
-                />
+                >
+                  <option value="" disabled>-- Choose Predefined Service --</option>
+                  {predefinedServices.map(s => (
+                    <option key={s.name} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -371,10 +412,10 @@ export default function CompanyAdminServices() {
                 ></textarea>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-1">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Price (LKR)
+                    Base / Visit Fee (LKR)
                   </label>
                   <input
                     type="number"
@@ -382,21 +423,7 @@ export default function CompanyAdminServices() {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand/20"
-                    placeholder="e.g. 3500"
-                  />
-                </div>
-
-                <div className="col-span-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Duration (Mins)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand/20"
-                    placeholder="e.g. 60"
+                    placeholder="e.g. 1500"
                   />
                 </div>
 
@@ -416,53 +443,7 @@ export default function CompanyAdminServices() {
                 </div>
               </div>
 
-              {/* Drag & Drop Cover Image Uploader */}
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Service Cover Image (Optional)
-                </label>
-                
-                <div 
-                  onDragEnter={handleDrag}
-                  onDragOver={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDrop={handleDrop}
-                  className={`border border-dashed rounded-xl p-4 text-center transition-all relative ${
-                    dragActive 
-                      ? 'border-brand bg-brand/10' 
-                      : 'border-slate-800 bg-slate-950/40 hover:border-slate-750'
-                  }`}
-                >
-                  <input
-                    id="service-image-input"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
 
-                  {imageFile ? (
-                    <div className="flex items-center justify-between bg-slate-950/60 p-2 rounded-lg text-[10px]">
-                      <span className="font-bold truncate max-w-[200px] text-white">{imageFile.name}</span>
-                      <button 
-                        type="button" 
-                        onClick={() => setImageFile(null)}
-                        className="text-slate-400 hover:text-red-400"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ) : (
-                    <label 
-                      htmlFor="service-image-input" 
-                      className="flex flex-col items-center justify-center cursor-pointer space-y-1"
-                    >
-                      <UploadCloud size={20} className="text-slate-500" />
-                      <p className="text-[10px] font-bold text-white">Drag & drop or <span className="text-brand hover:underline">browse</span> cover photo</p>
-                    </label>
-                  )}
-                </div>
-              </div>
 
               <div className="flex gap-3 justify-end pt-2 border-t border-slate-800/60">
                 <button

@@ -216,40 +216,19 @@ export default function ApplyTechnician() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                Primary Expertise
-              </label>
-              <select
-                value={selectedSkill}
-                onChange={(e) => setSelectedSkill(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand/20"
-              >
-                {skillOptions.map(skill => (
-                  <option key={skill} value={skill} className="bg-slate-900 text-white text-xs">{skill}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                Target Company
-              </label>
-              <select
-                value={selectedCompanyId}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand/20"
-              >
-                {companies.length === 0 ? (
-                  <option value="" className="bg-slate-900 text-white text-xs">Lanka Service Co. (Default)</option>
-                ) : (
-                  companies.map(comp => (
-                    <option key={comp._id} value={comp._id} className="bg-slate-900 text-white text-xs">{comp.name}</option>
-                  ))
-                )}
-              </select>
-            </div>
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+              Primary Expertise
+            </label>
+            <select
+              value={selectedSkill}
+              onChange={(e) => setSelectedSkill(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand/20"
+            >
+              {skillOptions.map(skill => (
+                <option key={skill} value={skill} className="bg-slate-900 text-white text-xs">{skill}</option>
+              ))}
+            </select>
           </div>
 
           {/* Drag & Drop CV File Upload Area */}

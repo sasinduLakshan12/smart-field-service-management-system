@@ -36,7 +36,7 @@ const serviceSchema = new mongoose.Schema({
   }],
   imageUrl: {
     type: String,
-    default: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80'
+    default: ''
   }
 }, {
   timestamps: true

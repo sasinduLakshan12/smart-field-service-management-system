@@ -385,33 +385,26 @@ export default function Home() {
   };
 
   const getServiceImage = (service) => {
-    if (service.imageUrl) return service.imageUrl;
+    if (service.imageUrl && service.imageUrl.trim() !== '' && !service.imageUrl.includes('photo-1504307651254-35680f356dfd')) return service.imageUrl;
 
-    const name = service.name?.toLowerCase() || '';
-    const desc = service.description?.toLowerCase() || '';
     const skills = service.requiredSkills?.map(s => s.toLowerCase()) || [];
 
-    const matches = (keyword) => 
-      name.includes(keyword) || 
-      desc.includes(keyword) || 
-      skills.some(s => s.includes(keyword));
-
-    if (matches('ac') || matches('air') || matches('cooling') || matches('condition')) {
-      return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80';
+    if (skills.includes('ac repair') || skills.includes('ac')) {
+      return '/images/ac_service.jpg';
     }
-    if (matches('plumb') || matches('pipe') || matches('water') || matches('leak') || matches('pump')) {
-      return 'https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?auto=format&fit=crop&w=600&q=80';
+    if (skills.includes('plumbing') || skills.includes('plumb')) {
+      return '/images/plumbing_service.jpg';
     }
-    if (matches('elect') || matches('wire') || matches('power') || matches('light') || matches('volt') || matches('circuit')) {
-      return 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=600&q=80';
+    if (skills.includes('electrical') || skills.includes('elect')) {
+      return '/images/electrical_service.jpg';
     }
-    if (matches('gener') || matches('engine') || matches('motor')) {
-      return 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80';
+    if (skills.includes('generator repair') || skills.includes('generator')) {
+      return '/images/generator_service.jpg';
     }
-    if (matches('applian') || matches('wash') || matches('fridge') || matches('dryer') || matches('oven') || matches('machine')) {
-      return 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80';
+    if (skills.includes('appliance repair') || skills.includes('appliance')) {
+      return '/images/appliance_service.jpg';
     }
-    return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80';
+    return '/images/ac_service.jpg';
   };
 
   const getFilteredServices = () => {
@@ -796,9 +789,12 @@ export default function Home() {
                       <div className="space-y-2">
                         {/* High Contrast Bright Price Label & Rating */}
                         <div className="flex justify-between items-center">
-                          <span className="text-lg font-black text-brand tracking-tight">
-                            LKR {service.price?.toLocaleString()}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-[8px] text-slate-400 font-black uppercase tracking-widest">Base Visit Fee</span>
+                            <span className="text-lg font-black text-brand tracking-tight">
+                              LKR {service.price?.toLocaleString()}
+                            </span>
+                          </div>
                           <span className="text-[10px] font-bold flex items-center gap-0.5 text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-lg">
                             <Star size={10} className="fill-amber-500" /> 4.8 (85+)
                           </span>
