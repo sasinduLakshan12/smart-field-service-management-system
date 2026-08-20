@@ -326,7 +326,7 @@ export default function Home() {
 
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat relative text-slate-100 transition-colors duration-200 overflow-x-hidden font-sans"
+      className="min-h-screen bg-cover bg-center bg-no-repeat relative text-slate-100 transition-colors duration-200 overflow-x-hidden font-sans pb-10"
       style={{ backgroundImage: "url('/landing_bg.jpg')" }}
     >
       {/* Heavy dark mask overlay for high readability contrast */}
@@ -334,22 +334,34 @@ export default function Home() {
 
       <div className="relative z-10 flex flex-col justify-between min-h-screen">
         
-        {/* Sticky Floating Glass Navbar with high contrast */}
-        <header className="sticky top-0 z-40 bg-slate-950/70 backdrop-blur-md border-b border-slate-900/80 transition-all shadow-lg">
-          <div className="max-w-6xl mx-auto px-6 h-20 flex justify-between items-center">
-            <h1 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2 select-none">
-              <div className="h-8 w-8 rounded-lg bg-brand flex items-center justify-center text-white font-black text-sm shadow-[0_0_12px_rgba(0,168,150,0.5)]">
+        {/* Premium Sticky Floating Pill-shaped Glass Navbar */}
+        <header className="sticky top-4 z-40 max-w-6xl w-[calc(100%-2rem)] mx-auto bg-slate-950/80 backdrop-blur-lg border border-slate-800/80 rounded-2xl transition-all shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] px-6">
+          <div className="w-full h-16 flex justify-between items-center">
+            <h1 className="text-lg font-black text-white tracking-tight flex items-center gap-2 select-none">
+              <div className="h-7 w-7 rounded-lg bg-brand flex items-center justify-center text-white font-black text-xs shadow-[0_0_10px_rgba(0,168,150,0.5)]">
                 F
               </div>
               FieldFlow
             </h1>
             
-            {/* Brightened Nav links for perfect readability */}
-            <nav className="hidden md:flex items-center gap-8 text-xs font-extrabold text-slate-200">
-              <a href="#home" className="hover:text-brand transition-colors">Home</a>
-              <a href="#services" className="hover:text-brand transition-colors">Services</a>
-              <a href="#features" className="hover:text-brand transition-colors">Platform</a>
-              <Link to="/apply" className="hover:text-brand transition-colors">Apply as Tech</Link>
+            {/* Brightened Nav links with smooth underlines and animations */}
+            <nav className="hidden md:flex items-center gap-8 text-[11px] uppercase tracking-wider font-extrabold text-slate-350">
+              <a href="#home" className="hover:text-brand transition-colors relative py-1 group">
+                Home
+                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-brand transition-all group-hover:w-full"></span>
+              </a>
+              <a href="#services" className="hover:text-brand transition-colors relative py-1 group">
+                Services
+                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-brand transition-all group-hover:w-full"></span>
+              </a>
+              <a href="#features" className="hover:text-brand transition-colors relative py-1 group">
+                Platform
+                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-brand transition-all group-hover:w-full"></span>
+              </a>
+              <Link to="/apply" className="hover:text-brand transition-colors relative py-1 group">
+                Apply as Tech
+                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-brand transition-all group-hover:w-full"></span>
+              </Link>
             </nav>
             
             <div className="flex items-center gap-4">
@@ -357,46 +369,46 @@ export default function Home() {
                 user.role === 'customer' ? (
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-white font-extrabold hidden sm:inline">
-                      Hello, {user.name}
+                      Hi, {user.name.split(' ')[0]}
                     </span>
                     <button
                       onClick={() => {
                         fetchMyBookings();
                         setShowMyBookings(true);
                       }}
-                      className="bg-slate-900 hover:bg-slate-855 text-white text-xs font-bold py-2 px-4 rounded-xl border border-slate-800 transition-all flex items-center gap-1.5 shadow-md"
+                      className="bg-brand/10 hover:bg-brand/20 text-brand text-xs font-bold py-2 px-3.5 rounded-xl border border-brand/20 transition-all flex items-center gap-1.5 shadow-sm"
                     >
-                      <ClipboardList size={14} className="text-brand" /> My Bookings
+                      <ClipboardList size={13} /> My Bookings
                     </button>
                     <button
                       onClick={logout}
                       title="Sign Out"
-                      className="p-2.5 rounded-xl bg-red-955/40 hover:bg-red-955/60 text-red-400 border border-red-900/40 transition-all"
+                      className="p-2 rounded-xl bg-red-955/30 hover:bg-red-955/50 text-red-400 border border-red-900/30 transition-all"
                     >
-                      <LogOut size={14} />
+                      <LogOut size={13} />
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <Link
                       to="/dashboard"
-                      className="bg-brand hover:bg-brand-hover text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all flex items-center gap-1.5"
+                      className="bg-brand hover:bg-brand-hover text-white text-xs font-bold py-2 px-4 rounded-xl shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all flex items-center gap-1.5"
                     >
-                      Go to Console <ArrowRight size={14} />
+                      Console <ArrowRight size={13} />
                     </Link>
                     <button
                       onClick={logout}
                       title="Sign Out"
-                      className="p-2.5 rounded-xl bg-red-955/40 hover:bg-red-955/60 text-red-400 border border-red-900/40 transition-all"
+                      className="p-2 rounded-xl bg-red-955/30 hover:bg-red-955/50 text-red-400 border border-red-900/30 transition-all"
                     >
-                      <LogOut size={14} />
+                      <LogOut size={13} />
                     </button>
                   </div>
                 )
               ) : (
                 <Link
                   to="/login"
-                  className="bg-brand hover:bg-brand-hover text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all"
+                  className="bg-brand hover:bg-brand-hover text-white text-xs font-bold py-2 px-4 rounded-xl shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all"
                 >
                   Sign In
                 </Link>
@@ -406,7 +418,7 @@ export default function Home() {
         </header>
 
         {/* Hero Section */}
-        <main id="home" className="max-w-6xl w-full mx-auto px-6 pt-12 pb-20 space-y-24">
+        <main id="home" className="max-w-6xl w-full mx-auto px-6 pt-16 pb-20 space-y-24">
           <div className="text-center space-y-5 max-w-3xl mx-auto">
             <span className="inline-flex px-3 py-1 rounded-full text-[10px] font-bold bg-brand-light text-brand border border-brand/20 uppercase tracking-widest backdrop-blur-md">
               Next-Gen Workforce Hub
@@ -424,7 +436,7 @@ export default function Home() {
                 user.role === 'customer' ? (
                   <a
                     href="#services"
-                    className="bg-brand hover:bg-brand-hover text-white font-bold py-3.5 px-8 rounded-2xl shadow-[0_8px_20px_rgba(0,168,150,0.4)] transition-all flex items-center gap-2 text-xs cursor-pointer animate-bounce"
+                    className="bg-brand hover:bg-brand-hover text-white font-bold py-3.5 px-8 rounded-2xl shadow-[0_8px_20px_rgba(0,168,150,0.4)] transition-all flex items-center gap-2 text-xs cursor-pointer"
                   >
                     Book a Service Now <ArrowRight size={16} />
                   </a>
@@ -499,12 +511,12 @@ export default function Home() {
                       {/* Footer values */}
                       <div className="flex justify-between items-center pt-4 border-t border-slate-800/80 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                         <div className="flex items-center gap-1.5 text-slate-355">
-                          <Clock size={13} className="text-slate-450" />
+                          <Clock size={13} className="text-slate-455" />
                           <span>{service.estimatedDuration || service.duration || 60} Mins</span>
                         </div>
                         <button
                           onClick={() => handleOpenBookModal(service)}
-                          className="flex items-center gap-1 bg-brand text-white font-extrabold px-3.5 py-2 rounded-xl hover:bg-brand-hover hover:scale-[1.02] shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all cursor-pointer"
+                          className="flex items-center gap-1 bg-brand text-white font-extrabold px-3.5 py-2 rounded-xl hover:bg-brand-hover hover:scale-[1.02] shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all cursor-pointer text-xs"
                         >
                           <span>Book Now</span> <ChevronRight size={12} />
                         </button>
@@ -559,7 +571,7 @@ export default function Home() {
 
       {/* 1. BOOK SERVICE SIMPLIFIED PREMIUM GLASS MODAL */}
       {showBookModal && selectedService && (
-        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-955/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="max-w-md w-full bg-slate-900/95 backdrop-blur-md rounded-[32px] shadow-2xl border border-slate-800 overflow-hidden text-slate-200 relative">
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand to-transparent"></div>
             
@@ -570,7 +582,7 @@ export default function Home() {
               </div>
               <button 
                 onClick={() => setShowBookModal(false)}
-                className="text-slate-400 hover:text-white p-1 bg-slate-950 rounded-lg border border-slate-800 hover:bg-slate-900 transition-all"
+                className="text-slate-400 hover:text-white p-1 bg-slate-950 rounded-lg border border-slate-850 hover:bg-slate-900 transition-all"
               >
                 <X size={16} />
               </button>
@@ -625,13 +637,13 @@ export default function Home() {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-950/60 border border-slate-805 rounded-xl text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand/45"
+                    className="w-full px-4 py-3 bg-slate-955/60 border border-slate-805 rounded-xl text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand/45"
                     placeholder="e.g. 0771234567"
                   />
                 </div>
               </div>
 
-              {/* 3. Interactive Map Pin Drop (Tiles issue fixed) */}
+              {/* 3. Interactive Map Pin Drop */}
               <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
@@ -649,7 +661,7 @@ export default function Home() {
                 </div>
                 <div 
                   id="booking-map-container" 
-                  className="h-44 w-full rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden z-10 relative shadow-inner"
+                  className="h-44 w-full rounded-2xl border border-slate-800 bg-slate-955 overflow-hidden z-10 relative shadow-inner"
                 ></div>
               </div>
 
@@ -739,7 +751,7 @@ export default function Home() {
                             ? 'bg-brand-light text-brand border-brand/20'
                             : booking.status === 'Assigned'
                             ? 'bg-sky-950/20 text-sky-400 border-sky-500/20'
-                            : 'bg-slate-950/30 text-slate-400 border-slate-500/20'
+                            : 'bg-slate-950/30 text-slate-455 border-slate-500/20'
                         }`}>
                           {booking.status}
                         </span>
@@ -817,7 +829,7 @@ export default function Home() {
                 className="h-64 w-full rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden z-10 relative shadow-inner"
               ></div>
 
-              <div className="text-[10px] text-slate-350 font-semibold leading-relaxed bg-slate-950/40 p-3.5 rounded-xl border border-slate-800 flex items-center gap-2">
+              <div className="text-[10px] text-slate-350 font-semibold leading-relaxed bg-slate-955/40 p-3.5 rounded-xl border border-slate-800 flex items-center gap-2">
                 <CheckCircle size={14} className="text-brand shrink-0" />
                 <span>Simulating live GPS telemetry updates from the technician's mobile console device towards Galle Road destination.</span>
               </div>
@@ -826,7 +838,7 @@ export default function Home() {
             <div className="p-5 bg-slate-950/35 border-t border-slate-800 flex justify-end">
               <button
                 onClick={() => setShowTracking(false)}
-                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 rounded-xl text-xs font-bold transition-all"
+                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-855 text-slate-200 rounded-xl text-xs font-bold transition-all"
               >
                 Dismiss Tracking
               </button>
