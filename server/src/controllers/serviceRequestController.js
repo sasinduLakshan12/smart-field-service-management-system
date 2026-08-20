@@ -122,7 +122,17 @@ exports.getRequests = async (req, res, next) => {
         path: 'customerId',
         populate: { path: 'userId', select: 'name email' }
       })
-      .populate('serviceId', 'name price');
+      .populate('serviceId', 'name price')
+      .lean();
+
+    // Attach associated workOrderId to each request dynamically
+    const WorkOrder = require('../models/WorkOrder');
+    for (const reqObj of requests) {
+      const wo = await WorkOrder.findOne({ requestId: reqObj._id });
+      if (wo) {
+        reqObj.workOrderId = wo._id;
+      }
+    }
 
     res.status(200).json({
       success: true,

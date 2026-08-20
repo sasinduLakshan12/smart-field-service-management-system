@@ -31,6 +31,13 @@ export default function Home() {
   const [showMyBookings, setShowMyBookings] = useState(false);
   const [myBookings, setMyBookings] = useState([]);
 
+  // Reviews / Ratings State
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewWorkOrderId, setReviewWorkOrderId] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewLoading, setReviewLoading] = useState(false);
+
   // Mobile Drawer State
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [showPolicyModal, setShowPolicyModal] = useState(null); // 'privacy' | 'terms' | null
@@ -109,6 +116,32 @@ export default function Home() {
       .catch(err => {
         console.error('Failed to fetch customer bookings', err);
       });
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewWorkOrderId) return;
+    setReviewLoading(true);
+    try {
+      const res = await axios.post('http://localhost:5000/api/v1/reviews', {
+        workOrderId: reviewWorkOrderId,
+        rating: Number(reviewRating),
+        comment: reviewComment
+      }, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (res.data.success) {
+        alert('Thank you! Your rating has been submitted successfully.');
+        setShowReviewModal(false);
+        setReviewComment('');
+        setReviewRating(5);
+        fetchMyBookings();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to submit review');
+    } finally {
+      setReviewLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -1290,6 +1323,20 @@ export default function Home() {
                           </button>
                         )}
 
+                        {booking.status === 'Completed' && booking.workOrderId && (
+                          <button
+                            onClick={() => {
+                              setReviewWorkOrderId(booking.workOrderId);
+                              setReviewRating(5);
+                              setReviewComment('');
+                              setShowReviewModal(true);
+                            }}
+                            className="bg-amber-500 hover:bg-amber-600 text-white font-extrabold py-1.5 px-3 rounded-lg flex items-center gap-1 transition-colors cursor-pointer text-[10px] shadow-sm"
+                          >
+                            <Star size={12} className="fill-white text-white" /> Rate Job
+                          </button>
+                        )}
+
                         {booking.serviceId?.price && (
                           <div className={`font-black text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>
                             LKR {booking.serviceId.price?.toLocaleString()}
@@ -1380,6 +1427,87 @@ export default function Home() {
                 Dismiss Tracking
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* RATING & REVIEW MODAL */}
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-slate-955/75 backdrop-blur-xs flex items-center justify-center p-4 z-[60]">
+          <div className={`max-w-md w-full rounded-[32px] shadow-2xl border overflow-hidden relative ${
+            isDark ? 'bg-slate-900/95 border-slate-800 text-slate-200' : 'bg-white border-slate-205 text-slate-850'
+          }`}>
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+            
+            <div className="p-6 border-b border-slate-100/10 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-amber-500">
+                <Star size={18} className="fill-amber-500" />
+                <h3 className={`font-extrabold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Rate Job Completion</h3>
+              </div>
+              <button 
+                onClick={() => setShowReviewModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg border border-slate-800/80 hover:bg-slate-900 transition-all cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitReview} className="p-6 space-y-5">
+              <div className="space-y-2 text-center">
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">How was your service experience?</p>
+                <div className="flex justify-center gap-2 pt-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      className="transition-all transform hover:scale-110 cursor-pointer"
+                    >
+                      <Star 
+                        size={32} 
+                        className={star <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-slate-700'} 
+                      />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-amber-400 font-black uppercase pt-1 tracking-widest">
+                  {reviewRating === 5 ? 'Excellent Service!' :
+                   reviewRating === 4 ? 'Very Good!' :
+                   reviewRating === 3 ? 'Good / Average' :
+                   reviewRating === 2 ? 'Needs Improvement' : 'Unsatisfactory'}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Feedback Comment (Optional)
+                </label>
+                <textarea
+                  rows="3"
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="Share details of your experience with this technician..."
+                  className="w-full px-3.5 py-3 bg-slate-950/40 border border-slate-800/60 rounded-2xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                ></textarea>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-2 border-t border-slate-100/10">
+                <button
+                  type="button"
+                  onClick={() => setShowReviewModal(false)}
+                  className="px-4 py-2 bg-slate-950 border border-slate-850 hover:bg-slate-900 text-slate-450 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  Skip
+                </button>
+                <button
+                  type="submit"
+                  disabled={reviewLoading}
+                  className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-extrabold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  {reviewLoading ? 'Submitting...' : 'Submit Rating'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

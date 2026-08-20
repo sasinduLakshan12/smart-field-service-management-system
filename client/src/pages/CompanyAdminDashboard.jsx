@@ -11,19 +11,27 @@ export default function CompanyAdminDashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/v1/analytics/dashboard', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    })
-      .then(res => {
-        if (res.data.success) {
-          setData(res.data.data);
-        }
-        setLoading(false);
+    const fetchStats = () => {
+      axios.get('http://localhost:5000/api/v1/analytics/dashboard', {
+        headers: { Authorization: `Bearer ${accessToken}` }
       })
-      .catch(err => {
-        setError(err.response?.data?.message || 'Failed to load analytics dashboard');
-        setLoading(false);
-      });
+        .then(res => {
+          if (res.data.success) {
+            setData(res.data.data);
+          }
+          setLoading(false);
+        })
+        .catch(err => {
+          setError(err.response?.data?.message || 'Failed to load analytics dashboard');
+          setLoading(false);
+        });
+    };
+
+    fetchStats(); // Fetch immediately on mount
+
+    const interval = setInterval(fetchStats, 6000); // Poll every 6 seconds for real-time updates
+
+    return () => clearInterval(interval); // Cleanup interval on component unmount
   }, [accessToken]);
 
   if (loading) {
