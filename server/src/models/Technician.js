@@ -25,6 +25,10 @@ const technicianSchema = new mongoose.Schema({
     lng: { type: Number },
     updatedAt: { type: Date }
   },
+  homeAddress: {
+    type: String,
+    trim: true
+  },
   ratings: {
     average: { type: Number, default: 5.0 },
     count: { type: Number, default: 0 }

@@ -31,6 +31,7 @@ L.Icon.Default.mergeOptions({
 export default function TechnicianDashboard() {
   const { accessToken, user } = useAuthStore();
   const [workOrders, setWorkOrders] = useState([]);
+  const [availableRequests, setAvailableRequests] = useState([]);
   const [profile, setProfile] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   
@@ -64,8 +65,9 @@ export default function TechnicianDashboard() {
       const techResponse = await axios.get('http://localhost:5000/api/v1/technicians', {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
+      let ownProfile = null;
       if (techResponse.data.success) {
-        const ownProfile = techResponse.data.data.find(t => {
+        ownProfile = techResponse.data.data.find(t => {
           const tUserId = t.userId?._id || t.userId;
           const currentUserId = user?._id || user?.id;
           return tUserId?.toString() === currentUserId?.toString();
@@ -74,10 +76,37 @@ export default function TechnicianDashboard() {
           setProfile(ownProfile);
         }
       }
+
+      // 3. Fetch all available pending requests
+      const reqResponse = await axios.get('http://localhost:5000/api/v1/service-requests?status=Pending', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (reqResponse.data.success) {
+        setAvailableRequests(reqResponse.data.data);
+      }
     } catch (err) {
       console.error('Failed to load technician dashboard data', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExpressInterest = async (requestId) => {
+    if (!window.confirm('Are you sure you want to express interest in this job? Admin will review and assign.')) return;
+    setActionLoading(true);
+    setFeedback(null);
+    try {
+      const res = await axios.post(`http://localhost:5000/api/v1/service-requests/${requestId}/interest`, {}, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (res.data.success) {
+        setFeedback({ success: true, message: 'Interest expressed successfully! Admin has been notified.' });
+        fetchProfileAndOrders();
+      }
+    } catch (err) {
+      setFeedback({ success: false, message: err.response?.data?.message || 'Failed to express interest.' });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -268,8 +297,73 @@ export default function TechnicianDashboard() {
         </div>
       )}
 
+      {/* Available Jobs Pool */}
+      {profile && (
+        <div className="space-y-4 relative z-10 mb-8">
+          <div className="flex items-center gap-2 text-brand">
+            <ClipboardList size={18} />
+            <h3 className="font-extrabold text-sm text-white">Available Jobs Pool</h3>
+          </div>
+          {availableRequests.filter(req => req.serviceId?.requiredSkills?.some(skill => profile.skills?.includes(skill))).length === 0 ? (
+            <div className="bg-slate-900/20 backdrop-blur-md rounded-3xl border border-slate-800/40 p-5 text-center text-slate-500 text-xs font-semibold">
+              No matching open jobs available in the pool right now.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {availableRequests
+                .filter(req => req.serviceId?.requiredSkills?.some(skill => profile.skills?.includes(skill)))
+                .map((req) => (
+                  <div key={req._id} className="bg-slate-900/40 backdrop-blur-md rounded-3xl border border-slate-800/60 p-5 space-y-3.5 flex flex-col justify-between shadow-lg">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-extrabold text-sm text-white">{req.serviceId?.name}</h4>
+                        <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 text-[9px] font-bold border border-amber-500/10">
+                          {req.priority?.toUpperCase()} PRIORITY
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium line-clamp-2 leading-relaxed">
+                        {req.problemDescription}
+                      </p>
+                      <div className="text-[10px] text-slate-500 font-bold flex flex-col gap-1.5">
+                        <div className="flex items-start gap-1.5">
+                          <MapPin size={12} className="text-brand mt-0.5 shrink-0" /> 
+                          <span>{req.address?.street || req.address}, {req.address?.city || ''}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 uppercase tracking-wider">
+                          <Clock size={12} className="text-slate-500 shrink-0" /> 
+                          <span>Pref Date: {new Date(req.preferredDate).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {req.interestedTechnicians?.includes(profile._id) ? (
+                      <button
+                        disabled
+                        className="w-full mt-2 bg-slate-850 text-slate-500 font-extrabold py-2.5 rounded-xl text-xs border border-slate-800/40 text-center cursor-not-allowed"
+                      >
+                        Interest Expressed
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleExpressInterest(req._id)}
+                        disabled={actionLoading}
+                        className="w-full mt-2 bg-brand hover:bg-brand-hover text-white font-extrabold py-2.5 rounded-xl text-xs shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all cursor-pointer text-center"
+                      >
+                        Express Interest
+                      </button>
+                    )}
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Task List */}
       <div className="space-y-4 relative z-10">
+        <div className="flex items-center gap-2 text-brand mb-1">
+          <ClipboardList size={18} />
+          <h3 className="font-extrabold text-sm text-white">My Active Tasks</h3>
+        </div>
         {workOrders.length === 0 ? (
           <div className="bg-slate-900/40 backdrop-blur-md rounded-3xl border border-slate-800/60 p-8 text-center text-slate-500 font-semibold">
             No active jobs assigned to you currently.

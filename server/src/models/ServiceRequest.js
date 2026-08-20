@@ -61,7 +61,11 @@ const serviceRequestSchema = new mongoose.Schema({
   additionalNotes: {
     type: String,
     trim: true
-  }
+  },
+  interestedTechnicians: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Technician'
+  }]
 }, {
   timestamps: true
 });

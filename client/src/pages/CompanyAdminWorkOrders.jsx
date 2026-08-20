@@ -95,7 +95,19 @@ export default function CompanyAdminWorkOrders() {
       )
     );
 
-    if (matchingTechs.length > 0) {
+    if (reqItem.interestedTechnicians && reqItem.interestedTechnicians.length > 0) {
+      let bestTechId = reqItem.interestedTechnicians[0]._id;
+      let highestRating = -1;
+      reqItem.interestedTechnicians.forEach(tech => {
+        const fullTech = technicians.find(t => t._id === tech._id);
+        const rating = fullTech?.ratings?.average || 5.0;
+        if (rating > highestRating) {
+          highestRating = rating;
+          bestTechId = tech._id;
+        }
+      });
+      setSelectedTechId(bestTechId);
+    } else if (matchingTechs.length > 0) {
       setSelectedTechId(matchingTechs[0]._id);
     } else {
       setSelectedTechId('');
@@ -141,16 +153,9 @@ export default function CompanyAdminWorkOrders() {
     }
   };
 
-  // Filter techs to show only matching ones for the selected request
+  // Return all technicians so the admin can manually select anyone if needed
   const getFilteredTechs = () => {
-    if (!selectedRequest) return [];
-    const serviceName = selectedRequest.serviceId?.name?.toLowerCase() || '';
-    return technicians.filter(tech => 
-      tech.skills.some(skill => 
-        serviceName.includes(skill.toLowerCase()) || 
-        skill.toLowerCase().includes(serviceName)
-      )
-    );
+    return technicians;
   };
 
   if (loading) {
@@ -370,6 +375,35 @@ export default function CompanyAdminWorkOrders() {
                 <div className="text-sm font-bold text-white">{selectedRequest?.serviceId?.name}</div>
                 <div className="text-[10px] text-slate-500 mt-0.5">For {selectedRequest?.customerId?.userId?.name}</div>
               </div>
+
+              {selectedRequest?.interestedTechnicians && selectedRequest.interestedTechnicians.length > 0 && (
+                <div className="space-y-1.5 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs">
+                  <p className="text-[10px] text-amber-500 font-extrabold uppercase tracking-wider">Interested Applicants ({selectedRequest.interestedTechnicians.length})</p>
+                  <div className="space-y-2 mt-1.5">
+                    {selectedRequest.interestedTechnicians.map(tech => {
+                      const fullTech = technicians.find(t => t._id === tech._id);
+                      const rating = fullTech?.ratings?.average || 5.0;
+                      return (
+                        <div 
+                          key={tech._id} 
+                          onClick={() => setSelectedTechId(tech._id)}
+                          className={`flex justify-between items-center p-2.5 rounded-xl border cursor-pointer transition-all ${
+                            selectedTechId === tech._id
+                              ? 'bg-brand/20 border-brand/80 shadow-md'
+                              : 'bg-slate-950/40 border-slate-800 hover:bg-slate-950/80'
+                          }`}
+                        >
+                          <div className="font-bold text-white text-[11px]">{tech.userId?.name || 'Technician'}</div>
+                          <div className="flex items-center gap-1 font-bold text-slate-350">
+                            <span>⭐ {rating}</span>
+                            <span className="text-[9px] text-slate-500 font-medium">({fullTech?.ratings?.count || 0} reviews)</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">

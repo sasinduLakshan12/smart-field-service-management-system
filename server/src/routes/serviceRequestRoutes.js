@@ -1,5 +1,5 @@
 const express = require('express');
-const { createRequest, getRequests, getRequest, updateRequestStatus } = require('../controllers/serviceRequestController');
+const { createRequest, getRequests, getRequest, updateRequestStatus, expressInterest } = require('../controllers/serviceRequestController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { enforceTenant } = require('../middleware/tenantMiddleware');
 
@@ -7,6 +7,8 @@ const router = express.Router();
 
 router.use(protect);
 router.use(enforceTenant);
+
+router.post('/:id/interest', authorize('technician'), expressInterest);
 
 router.route('/')
   .post(authorize('customer'), createRequest)

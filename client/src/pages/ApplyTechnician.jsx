@@ -1,7 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, CheckCircle, ShieldAlert, FileText, UploadCloud, X } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { ArrowLeft, CheckCircle, ShieldAlert, FileText, UploadCloud, X, MapPin, Navigation } from 'lucide-react';
+
+// Fix Leaflet Default Icon path resolution issues in bundlers
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 export default function ApplyTechnician() {
   const navigate = useNavigate();
@@ -11,6 +21,17 @@ export default function ApplyTechnician() {
   const [selectedSkill, setSelectedSkill] = useState('AC Repair');
   const [experienceYears, setExperienceYears] = useState('');
   
+  // Location / Geocoding State
+  const [address, setAddress] = useState('');
+  const [coordinates, setCoordinates] = useState({ lat: 6.9271, lng: 79.8612 });
+  const [detectingLocation, setDetectingLocation] = useState(false);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+
+  // Autocomplete Suggestions State
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   // File upload state
   const [cvFile, setCvFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
@@ -20,6 +41,132 @@ export default function ApplyTechnician() {
 
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
+
+  const handleAddressChange = async (val) => {
+    setAddress(val);
+    if (val.trim().length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&limit=5&countrycodes=lk`, {
+        headers: { 'Accept-Language': 'en' }
+      });
+      const data = await response.json();
+      if (data) {
+        setSuggestions(data);
+        setShowSuggestions(true);
+      }
+    } catch (err) {
+      console.error('Failed to fetch address suggestions', err);
+    }
+  };
+
+  const handleSelectSuggestion = (sug) => {
+    const lat = parseFloat(sug.lat);
+    const lng = parseFloat(sug.lon);
+    setAddress(sug.display_name);
+    setCoordinates({ lat, lng });
+    setSuggestions([]);
+    setShowSuggestions(false);
+    
+    if (mapRef.current) {
+      mapRef.current.setView([lat, lng], 14);
+    }
+    if (markerRef.current) {
+      markerRef.current.setLatLng([lat, lng]);
+    }
+  };
+
+  const fetchAddressFromCoords = async (lat, lng) => {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`, {
+        headers: { 'Accept-Language': 'en' }
+      });
+      const data = await response.json();
+      if (data && data.display_name) {
+        setAddress(data.display_name);
+      }
+    } catch (error) {
+      console.error('OSM Geocoding failed:', error);
+    }
+  };
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+    setDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const newCoords = { lat: latitude, lng: longitude };
+        setCoordinates(newCoords);
+        if (mapRef.current) {
+          mapRef.current.setView([latitude, longitude], 14);
+        }
+        if (markerRef.current) {
+          markerRef.current.setLatLng([latitude, longitude]);
+        }
+        fetchAddressFromCoords(latitude, longitude);
+        setDetectingLocation(false);
+      },
+      (error) => {
+        console.error('Geolocation lock error:', error);
+        setDetectingLocation(false);
+        alert('Could not auto-lock your GPS location. Please drop a pin on the map manually!');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  // Initialize registration map
+  useEffect(() => {
+    const mapContainer = document.getElementById('tech-register-map');
+    if (!mapContainer || mapRef.current) return;
+
+    const map = L.map('tech-register-map', {
+      zoomControl: true,
+      scrollWheelZoom: true
+    }).setView([coordinates.lat, coordinates.lng], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const marker = L.marker([coordinates.lat, coordinates.lng], {
+      draggable: true
+    }).addTo(map);
+
+    // Initial geocode
+    fetchAddressFromCoords(coordinates.lat, coordinates.lng);
+
+    marker.on('dragend', (e) => {
+      const { lat, lng } = e.target.getLatLng();
+      setCoordinates({ lat, lng });
+      fetchAddressFromCoords(lat, lng);
+    });
+
+    map.on('click', (e) => {
+      const { lat, lng } = e.latlng;
+      setCoordinates({ lat, lng });
+      marker.setLatLng([lat, lng]);
+      fetchAddressFromCoords(lat, lng);
+    });
+
+    mapRef.current = map;
+    markerRef.current = marker;
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     axios.get('http://localhost:5000/api/v1/companies')
@@ -89,7 +236,9 @@ export default function ApplyTechnician() {
         experienceYears: Number(experienceYears),
         fileName: cvFile.name,
         fileData: base64File,
-        companyId: selectedCompanyId || undefined
+        companyId: selectedCompanyId || undefined,
+        address,
+        coordinates
       });
 
       if (res.data.success) {
@@ -229,6 +378,57 @@ export default function ApplyTechnician() {
                 <option key={skill} value={skill} className="bg-slate-900 text-white text-xs">{skill}</option>
               ))}
             </select>
+          </div>
+
+          {/* Geocoded Address Map Picker */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Home Base Address (GPS Auto-Locked)
+              </label>
+              <button
+                type="button"
+                onClick={handleDetectLocation}
+                disabled={detectingLocation}
+                className="text-[9px] font-black uppercase tracking-wider text-brand hover:text-brand-hover flex items-center gap-1 bg-brand/10 border border-brand/20 px-2 py-1 rounded-lg cursor-pointer"
+              >
+                <Navigation size={10} className={detectingLocation ? 'animate-spin' : ''} /> 
+                {detectingLocation ? 'Locating...' : 'Get Current GPS'}
+              </button>
+            </div>
+            
+            <div className="relative">
+              <input
+                type="text"
+                required
+                value={address}
+                onChange={(e) => handleAddressChange(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand/20"
+                placeholder="Type location (e.g. Vavuniya) or drag marker"
+              />
+              <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand" />
+
+              {/* Autocomplete suggestions list */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 mt-1 bg-slate-900 border border-slate-800/80 rounded-xl shadow-2xl z-[60] overflow-hidden text-xs max-h-48 overflow-y-auto">
+                  {suggestions.map((sug) => (
+                    <div
+                      key={sug.place_id}
+                      onClick={() => handleSelectSuggestion(sug)}
+                      className="px-3.5 py-2 hover:bg-brand/20 text-slate-200 cursor-pointer border-b border-slate-800/40 last:border-0 truncate"
+                      title={sug.display_name}
+                    >
+                      {sug.display_name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Map Container */}
+            <div className="h-40 rounded-2xl overflow-hidden border border-slate-800/80 shadow-md relative z-10">
+              <div id="tech-register-map" className="h-full w-full"></div>
+            </div>
           </div>
 
           {/* Drag & Drop CV File Upload Area */}

@@ -123,6 +123,10 @@ exports.getRequests = async (req, res, next) => {
         populate: { path: 'userId', select: 'name email' }
       })
       .populate('serviceId', 'name price')
+      .populate({
+        path: 'interestedTechnicians',
+        populate: { path: 'userId', select: 'name' }
+      })
       .lean();
 
     // Attach associated workOrderId to each request dynamically
@@ -207,6 +211,41 @@ exports.updateRequestStatus = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: `Request status updated to ${status}`,
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Express interest in an available service request
+// @route   POST /api/v1/service-requests/:id/interest
+// @access  Private (Technician only)
+exports.expressInterest = async (req, res, next) => {
+  try {
+    const Technician = require('../models/Technician');
+    const technician = await Technician.findOne({ userId: req.user._id, companyId: req.user.companyId });
+    if (!technician) {
+      return res.status(404).json({ success: false, message: 'Technician profile not found' });
+    }
+
+    const request = await ServiceRequest.findOne({ _id: req.params.id, companyId: req.user.companyId });
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Service request not found' });
+    }
+
+    if (request.status !== 'Pending' && request.status !== 'Reviewed') {
+      return res.status(400).json({ success: false, message: 'This job is no longer available' });
+    }
+
+    if (!request.interestedTechnicians.includes(technician._id)) {
+      request.interestedTechnicians.push(technician._id);
+      await request.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Interest expressed successfully! Admin has been notified.',
       data: request
     });
   } catch (error) {

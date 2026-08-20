@@ -271,3 +271,56 @@ exports.updateWorkOrderStatus = async (req, res, next) => {
   }
 };
 
+// @desc    Self-accept available service request (First-come-first-serve for matched technicians)
+// @route   POST /api/v1/work-orders/accept/:requestId
+// @access  Private (Technician only)
+exports.acceptJob = async (req, res, next) => {
+  try {
+    const { requestId } = req.params;
+
+    const serviceRequest = await ServiceRequest.findOne({ _id: requestId, companyId: req.user.companyId }).populate('serviceId');
+    if (!serviceRequest) {
+      return res.status(404).json({ success: false, message: 'Service request not found' });
+    }
+
+    if (serviceRequest.status !== 'Pending' && serviceRequest.status !== 'Reviewed') {
+      return res.status(400).json({ success: false, message: 'This job has already been accepted by another technician.' });
+    }
+
+    const technician = await Technician.findOne({ userId: req.user._id, companyId: req.user.companyId });
+    if (!technician) {
+      return res.status(404).json({ success: false, message: 'Technician profile not found' });
+    }
+
+    const requiredSkills = serviceRequest.serviceId?.requiredSkills || [];
+    const technicianSkills = technician.skills || [];
+    const hasRequiredSkills = requiredSkills.every(skill => technicianSkills.includes(skill));
+
+    if (!hasRequiredSkills) {
+      return res.status(400).json({ success: false, message: 'You do not possess the required skills for this service.' });
+    }
+
+    const workOrder = await WorkOrder.create({
+      requestId: serviceRequest._id,
+      companyId: req.user.companyId,
+      customerId: serviceRequest.customerId,
+      technicianId: technician._id,
+      serviceId: serviceRequest.serviceId._id,
+      scheduledDate: serviceRequest.preferredDate,
+      status: 'Accepted',
+      notes: serviceRequest.additionalNotes || 'Self-accepted by technician'
+    });
+
+    serviceRequest.status = 'Accepted';
+    await serviceRequest.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Job accepted and assigned successfully!',
+      data: workOrder
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

@@ -11,7 +11,7 @@ const path = require('path');
 // @access  Public
 exports.submitApplication = async (req, res, next) => {
   try {
-    const { name, email, password, skills, experienceYears, fileName, fileData, companyId } = req.body;
+    const { name, email, password, skills, experienceYears, fileName, fileData, companyId, address, coordinates } = req.body;
 
     // Default to first company if not provided (for seed convenience)
     let targetCompanyId = companyId;
@@ -77,6 +77,8 @@ exports.submitApplication = async (req, res, next) => {
       experienceYears: Number(experienceYears),
       cvUrl,
       companyId: targetCompanyId,
+      address,
+      coordinates,
       status: 'pending'
     });
 
@@ -145,7 +147,13 @@ exports.reviewApplication = async (req, res, next) => {
         userId: user._id,
         companyId: application.companyId,
         skills: application.skills,
-        availabilityStatus: 'available'
+        availabilityStatus: 'available',
+        homeAddress: application.address,
+        currentLocation: {
+          lat: application.coordinates?.lat,
+          lng: application.coordinates?.lng,
+          updatedAt: new Date()
+        }
       });
     }
 

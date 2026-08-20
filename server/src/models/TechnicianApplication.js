@@ -35,6 +35,14 @@ const technicianApplicationSchema = new mongoose.Schema({
     ref: 'Company',
     required: true
   },
+  address: {
+    type: String,
+    trim: true
+  },
+  coordinates: {
+    lat: { type: Number },
+    lng: { type: Number }
+  },
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],
