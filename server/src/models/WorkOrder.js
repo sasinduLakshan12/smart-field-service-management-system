@@ -76,7 +76,15 @@ const workOrderSchema = new mongoose.Schema({
   },
   attachments: [{
     type: String
-  }]
+  }],
+  eta: {
+    type: Number, // In minutes
+    default: null
+  },
+  currentCoordinates: {
+    lat: { type: Number, default: null },
+    lng: { type: Number, default: null }
+  }
 }, {
   timestamps: true
 });
