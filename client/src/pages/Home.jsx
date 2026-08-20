@@ -398,7 +398,7 @@ export default function Home() {
   return (
     <div 
       className={`min-h-screen bg-cover bg-center bg-no-repeat relative transition-colors duration-200 overflow-x-hidden font-sans pb-10 ${
-        isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'
+        isDark ? 'bg-slate-955 text-slate-100' : 'bg-slate-100 text-slate-900'
       }`}
       style={{ backgroundImage: "url('/landing_bg.jpg')" }}
     >
@@ -412,7 +412,7 @@ export default function Home() {
         {/* Premium Sticky Floating Pill-shaped Glass Navbar */}
         <header className={`sticky top-4 z-40 max-w-6xl w-[calc(100%-2rem)] mx-auto rounded-2xl transition-all shadow-xl px-6 border ${
           isDark 
-            ? 'bg-slate-950/85 border-slate-800/80' 
+            ? 'bg-slate-950/80 border-slate-800/80' 
             : 'bg-white/90 border-slate-200 shadow-md'
         }`}>
           <div className="w-full h-16 flex justify-between items-center">
@@ -450,61 +450,64 @@ export default function Home() {
                 className={`p-2 rounded-xl border transition-all cursor-pointer ${
                   isDark 
                     ? 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white' 
-                    : 'bg-white border-slate-205 text-slate-600 hover:text-slate-950 shadow-xs'
+                    : 'bg-white border-slate-205 text-slate-600 hover:text-slate-955 shadow-xs'
                 }`}
                 title="Toggle Dark/Light Mode"
               >
                 {isDark ? <Sun size={14} className="text-amber-500" /> : <Moon size={14} />}
               </button>
 
-              {user ? (
-                user.role === 'customer' ? (
-                  <div className="flex items-center gap-3">
-                    <span className={`text-xs font-extrabold hidden sm:inline ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                      Hi, {user.name.split(' ')[0]}
-                    </span>
-                    <button
-                      onClick={() => {
-                        fetchMyBookings();
-                        setShowMyBookings(true);
-                      }}
-                      className="bg-brand/10 hover:bg-brand/20 text-brand text-xs font-bold py-2 px-3.5 rounded-xl border border-brand/20 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    >
-                      <ClipboardList size={13} /> My Bookings
-                    </button>
-                    <button
-                      onClick={logout}
-                      title="Sign Out"
-                      className="p-2 rounded-xl bg-red-950/20 hover:bg-red-955/40 text-red-450 border border-red-900/30 transition-all cursor-pointer"
-                    >
-                      <LogOut size={13} />
-                    </button>
-                  </div>
+              {/* Desktop Auth Section (Hidden on Mobile screens to avoid wrapping) */}
+              <div className="hidden md:flex items-center gap-3">
+                {user ? (
+                  user.role === 'customer' ? (
+                    <>
+                      <span className={`text-xs font-extrabold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                        Hi, {user.name.split(' ')[0]}
+                      </span>
+                      <button
+                        onClick={() => {
+                          fetchMyBookings();
+                          setShowMyBookings(true);
+                        }}
+                        className="bg-brand/10 hover:bg-brand/20 text-brand text-xs font-bold py-2 px-3.5 rounded-xl border border-brand/20 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                      >
+                        <ClipboardList size={13} /> My Bookings
+                      </button>
+                      <button
+                        onClick={logout}
+                        title="Sign Out"
+                        className="p-2 rounded-xl bg-red-950/20 hover:bg-red-955/40 text-red-450 border border-red-900/30 transition-all cursor-pointer"
+                      >
+                        <LogOut size={13} />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to="/dashboard"
+                        className="bg-brand hover:bg-brand-hover text-white text-xs font-bold py-2 px-4 rounded-xl shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all flex items-center gap-1.5"
+                      >
+                        Console <ArrowRight size={13} />
+                      </Link>
+                      <button
+                        onClick={logout}
+                        title="Sign Out"
+                        className="p-2 rounded-xl bg-red-955/30 hover:bg-red-955/50 text-red-400 border border-red-900/30 transition-all cursor-pointer"
+                      >
+                        <LogOut size={13} />
+                      </button>
+                    </>
+                  )
                 ) : (
-                  <div className="flex items-center gap-3">
-                    <Link
-                      to="/dashboard"
-                      className="bg-brand hover:bg-brand-hover text-white text-xs font-bold py-2 px-4 rounded-xl shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all flex items-center gap-1.5"
-                    >
-                      Console <ArrowRight size={13} />
-                    </Link>
-                    <button
-                      onClick={logout}
-                      title="Sign Out"
-                      className="p-2 rounded-xl bg-red-955/30 hover:bg-red-955/50 text-red-400 border border-red-900/30 transition-all cursor-pointer"
-                    >
-                      <LogOut size={13} />
-                    </button>
-                  </div>
-                )
-              ) : (
-                <Link
-                  to="/login"
-                  className="bg-brand hover:bg-brand-hover text-white text-xs font-bold py-2 px-4 rounded-xl shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all"
-                >
-                  Sign In
-                </Link>
-              )}
+                  <Link
+                    to="/login"
+                    className="bg-brand hover:bg-brand-hover text-white text-xs font-bold py-2 px-4 rounded-xl shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all"
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </div>
 
               {/* Hamburger Menu Toggle on mobile screens */}
               <button
@@ -519,10 +522,10 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Mobile Navigation Drawer */}
+        {/* Mobile Navigation Drawer with Customer Actions incorporated */}
         {showMobileNav && (
           <div className={`fixed inset-0 z-45 md:hidden flex flex-col justify-center items-center space-y-6 text-sm font-bold backdrop-blur-md ${
-            isDark ? 'bg-slate-950/90 text-slate-100' : 'bg-white/95 text-slate-900'
+            isDark ? 'bg-slate-950/95 text-slate-100' : 'bg-white/95 text-slate-900'
           }`}>
             <button 
               onClick={() => setShowMobileNav(false)}
@@ -530,13 +533,68 @@ export default function Home() {
             >
               <X size={20} />
             </button>
+            
             <a href="#home" onClick={() => setShowMobileNav(false)} className="hover:text-brand">Home</a>
             <a href="#services" onClick={() => setShowMobileNav(false)} className="hover:text-brand">Services</a>
             <a href="#features" onClick={() => setShowMobileNav(false)} className="hover:text-brand">Platform</a>
             <Link to="/apply" onClick={() => setShowMobileNav(false)} className="hover:text-brand">Apply as Tech</Link>
-            {!user && (
-              <Link to="/login" onClick={() => setShowMobileNav(false)} className="bg-brand text-white px-6 py-2 rounded-xl shadow-md">Sign In</Link>
-            )}
+            
+            {/* Mobile Auth actions rendered inside drawer */}
+            <div className="border-t border-slate-800/10 pt-6 flex flex-col items-center gap-4 w-full px-12">
+              {user ? (
+                user.role === 'customer' ? (
+                  <>
+                    <span className="text-xs font-black uppercase text-slate-500">Hi, {user.name}</span>
+                    <button
+                      onClick={() => {
+                        setShowMobileNav(false);
+                        fetchMyBookings();
+                        setShowMyBookings(true);
+                      }}
+                      className="w-full bg-brand/10 text-brand text-xs font-bold py-3 rounded-xl border border-brand/20 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <ClipboardList size={14} /> My Bookings
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMobileNav(false);
+                        logout();
+                      }}
+                      className="w-full py-3 bg-red-950/20 text-red-400 border border-red-900/30 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+                    >
+                      <LogOut size={14} /> Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setShowMobileNav(false)}
+                      className="w-full bg-brand text-white text-xs font-bold py-3 rounded-xl shadow-md text-center"
+                    >
+                      Go to Console
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setShowMobileNav(false);
+                        logout();
+                      }}
+                      className="w-full py-3 bg-red-950/20 text-red-400 border border-red-900/30 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+                    >
+                      <LogOut size={14} /> Sign Out
+                    </button>
+                  </>
+                )
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setShowMobileNav(false)}
+                  className="w-full bg-brand text-white text-xs font-bold py-3 rounded-xl shadow-md text-center"
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
           </div>
         )}
 
@@ -634,7 +692,6 @@ export default function Home() {
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/10 to-transparent"></div>
                     </div>
 
-                    {/* Content Body with clear readable colors */}
                     <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
                       <div className="space-y-2">
                         {/* High Contrast Bright Price Label & Rating */}
@@ -760,7 +817,7 @@ export default function Home() {
           </div>
         </main>
 
-        {/* Dynamic Corporate SaaS Footer (Persistent Dark Style) */}
+        {/* Dynamic Corporate SaaS Footer */}
         <footer className="border-t pt-16 pb-8 text-xs bg-slate-950 border-slate-900 text-slate-400 shadow-2xl">
           <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div className="space-y-4">
@@ -775,10 +832,42 @@ export default function Home() {
             <div>
               <h5 className="font-extrabold text-xs uppercase tracking-wider mb-4 text-white">Services</h5>
               <ul className="space-y-2.5 font-semibold">
-                <li><a href="#services" className="hover:text-brand">AC Maintenance</a></li>
-                <li><a href="#services" className="hover:text-brand">Electrical Rewiring</a></li>
-                <li><a href="#services" className="hover:text-brand">Plumbing & Pumps</a></li>
-                <li><a href="#services" className="hover:text-brand">Generator Repair</a></li>
+                <li>
+                  <a 
+                    href="#services" 
+                    onClick={() => setCategoryFilter('AC Repair')}
+                    className="hover:text-brand transition-colors"
+                  >
+                    AC Maintenance
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="#services" 
+                    onClick={() => setCategoryFilter('Electrical')}
+                    className="hover:text-brand transition-colors"
+                  >
+                    Electrical Rewiring
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="#services" 
+                    onClick={() => setCategoryFilter('Plumbing')}
+                    className="hover:text-brand transition-colors"
+                  >
+                    Plumbing & Pumps
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="#services" 
+                    onClick={() => setCategoryFilter('Generator Repair')}
+                    className="hover:text-brand transition-colors"
+                  >
+                    Generator Repair
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
@@ -792,8 +881,18 @@ export default function Home() {
             <div>
               <h5 className="font-extrabold text-xs uppercase tracking-wider mb-4 text-white">Help & Support</h5>
               <ul className="space-y-2.5">
-                <li><span className="text-slate-500 block font-bold">Customer Care Desk:</span> <p className="font-bold text-sm mt-0.5 text-white">+94 11 234 5678</p></li>
-                <li><span className="text-slate-500 block font-bold">Email support:</span> <p className="font-bold text-sm mt-0.5 text-white">help@fieldflow.lk</p></li>
+                <li>
+                  <span className="text-slate-500 block font-bold">Customer Care Desk:</span> 
+                  <a href="tel:+94112345678" className="font-bold text-sm mt-0.5 text-white hover:text-brand transition-colors block">
+                    +94 11 234 5678
+                  </a>
+                </li>
+                <li>
+                  <span className="text-slate-500 block font-bold">Email support:</span> 
+                  <a href="mailto:help@fieldflow.lk" className="font-bold text-sm mt-0.5 text-white hover:text-brand transition-colors block">
+                    help@fieldflow.lk
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -824,7 +923,7 @@ export default function Home() {
               <button 
                 onClick={() => setShowDetailModal(false)}
                 className={`p-1 rounded-lg border cursor-pointer ${
-                  isDark ? 'bg-slate-950 border-slate-850 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'
+                  isDark ? 'bg-slate-950 border-slate-855 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'
                 }`}
               >
                 <X size={15} />
@@ -900,7 +999,7 @@ export default function Home() {
               <button 
                 onClick={() => setShowBookModal(false)}
                 className={`p-1 rounded-lg border transition-all cursor-pointer ${
-                  isDark ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 border-slate-200 text-slate-500'
+                  isDark ? 'bg-slate-955 border-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 border-slate-205 text-slate-500'
                 }`}
               >
                 <X size={16} />
@@ -927,7 +1026,7 @@ export default function Home() {
                   value={problemDescription}
                   onChange={(e) => setProblemDescription(e.target.value)}
                   className={`w-full px-4 py-3 border rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand/45 transition-all ${
-                    isDark ? 'bg-slate-950/60 border-slate-800 text-white' : 'bg-white border-slate-205 text-slate-900'
+                    isDark ? 'bg-slate-955/60 border-slate-800 text-white' : 'bg-white border-slate-205 text-slate-900'
                   }`}
                   placeholder="Describe what needs repair/service..."
                 ></textarea>
@@ -988,7 +1087,7 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                <label className="block text-[10px] font-bold text-slate-555 uppercase tracking-wider mb-1.5">
                   Service Delivery Address
                 </label>
                 <input
@@ -997,7 +1096,7 @@ export default function Home() {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   className={`w-full px-4 py-3 border rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand/45 ${
-                    isDark ? 'bg-slate-950/60 border-slate-805 text-white' : 'bg-white border-slate-205 text-slate-900'
+                    isDark ? 'bg-slate-955/60 border-slate-805 text-white' : 'bg-white border-slate-205 text-slate-900'
                   }`}
                   placeholder="Street and City (Autofills on map pin drop)"
                 />
@@ -1007,7 +1106,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setShowBookModal(false)}
-                  className="px-5 py-2.5 border border-slate-205 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="px-5 py-2.5 border border-slate-205 rounded-xl text-xs font-semibold text-slate-450 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1026,7 +1125,7 @@ export default function Home() {
 
       {/* CUSTOMER BOOKINGS HISTORY PREMIUM GLASS MODAL */}
       {showMyBookings && (
-        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-955/75 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className={`max-w-2xl w-full rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border overflow-hidden relative ${
             isDark ? 'bg-slate-900/95 border-slate-800 text-slate-200' : 'bg-white border-slate-205 text-slate-855'
           }`}>
@@ -1049,7 +1148,7 @@ export default function Home() {
 
             <div className="p-6 overflow-y-auto max-h-[58vh] space-y-4">
               {myBookings.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 font-semibold">
+                <div className="text-center py-12 text-slate-555 font-semibold">
                   You have not submitted any service bookings yet.
                 </div>
               ) : (
