@@ -41,7 +41,7 @@ export default function Login() {
             {/* Back to Home Link */}
             <Link 
               to="/" 
-              className="inline-flex items-center gap-1.5 text-[10px] text-slate-500 hover:text-brand font-bold uppercase tracking-wider mb-1 transition-colors"
+              className="inline-flex items-center gap-1.5 text-[10px] text-slate-300 hover:text-brand bg-slate-950/40 border border-slate-800/80 px-3.5 py-1.5 rounded-xl font-extrabold uppercase tracking-wider mb-2 transition-colors mx-auto"
             >
               ← Back to Homepage
             </Link>
@@ -129,17 +129,21 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="text-center pt-2">
+          <div className="text-center pt-2 select-none">
+            <span className="text-xs text-slate-500 font-medium">
+              {isRegister ? 'Already have an account? ' : "Don't have an account? "}
+            </span>
             <button
+              type="button"
               onClick={() => {
                 setIsRegister(!isRegister);
                 setName('');
                 setEmail('');
                 setPassword('');
               }}
-              className="text-xs text-slate-400 hover:text-white font-semibold transition-colors focus:outline-none"
+              className="text-xs text-brand hover:text-brand-hover hover:underline font-bold transition-all cursor-pointer focus:outline-none"
             >
-              {isRegister ? 'Already have an account? Sign In' : "Don't have an account? Create one"}
+              {isRegister ? 'Sign In' : 'Create one'}
             </button>
           </div>
         </div>

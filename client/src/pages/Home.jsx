@@ -119,6 +119,24 @@ export default function Home() {
     }
   }, [accessToken, user]);
 
+  // Fetch physical street address from GPS Coordinates dynamically using OpenStreetMap Nominatim API
+  const fetchAddressFromCoords = async (lat, lng) => {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`, {
+        headers: { 'Accept-Language': 'en' }
+      });
+      const data = await response.json();
+      if (data && data.display_name) {
+        setAddress(data.display_name);
+      } else {
+        setAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)} (GPS Locked)`);
+      }
+    } catch (error) {
+      console.error("Reverse geocoding failed:", error);
+      setAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)} (GPS Locked)`);
+    }
+  };
+
   // Initialize interactive map for booking selector
   useEffect(() => {
     if (showBookModal && selectedService) {
@@ -145,14 +163,14 @@ export default function Home() {
         marker.on('dragend', () => {
           const position = marker.getLatLng();
           setCoordinates({ lat: position.lat, lng: position.lng });
-          setAddress(`Galle Road, Colombo (GPS Locked)`);
+          fetchAddressFromCoords(position.lat, position.lng);
         });
 
         map.on('click', (e) => {
           const { lat, lng } = e.latlng;
           marker.setLatLng([lat, lng]);
           setCoordinates({ lat, lng });
-          setAddress(`Main Street, Colombo (GPS Locked)`);
+          fetchAddressFromCoords(lat, lng);
         });
       }, 300);
     }
@@ -319,7 +337,7 @@ export default function Home() {
           bookingMapRef.current.setView([lat, lng], 14);
         }
 
-        setAddress('Galle Road, Colombo (GPS Auto-Locked)');
+        fetchAddressFromCoords(lat, lng);
         setDetectingLocation(false);
         setFeedback({ success: true, message: `GPS coordinates locked successfully! (${lat.toFixed(4)}, ${lng.toFixed(4)})` });
       },
@@ -666,13 +684,41 @@ export default function Home() {
               Optimize your mobile workforce, assign jobs instantly with skill-matching algorithms, track technicians live on maps, and automate billing on task resolution.
             </p>
 
-            <div className="flex justify-center gap-4 pt-2">
+            <div className="flex flex-wrap justify-center gap-4 pt-2">
               <a
                 href="#services"
-                className="bg-brand hover:bg-brand-hover text-white font-bold py-3.5 px-8 rounded-2xl shadow-[0_8px_20px_rgba(0,168,150,0.4)] transition-all flex items-center gap-2 text-xs cursor-pointer"
+                className="bg-brand hover:bg-brand-hover text-white font-extrabold py-3.5 px-8 rounded-2xl shadow-[0_8px_20px_rgba(0,168,150,0.4)] hover:scale-[1.01] transition-all flex items-center gap-2 text-xs cursor-pointer"
               >
-                Browse Services <ArrowRight size={16} />
+                <Search size={14} /> Find a Technician
               </a>
+              <Link
+                to="/apply"
+                className={`font-extrabold py-3.5 px-8 rounded-2xl border hover:scale-[1.01] transition-all flex items-center gap-2 text-xs cursor-pointer ${
+                  isDark 
+                    ? 'bg-slate-900/50 border-slate-800 text-slate-200 hover:bg-slate-900' 
+                    : 'bg-white border-slate-205 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <Briefcase size={14} className="text-brand" /> Join as Provider
+              </Link>
+            </div>
+
+            {/* Platform Trust Stats Row */}
+            <div className="flex justify-center items-center flex-wrap gap-x-8 gap-y-3 pt-6 text-[10px] uppercase font-bold tracking-widest text-slate-400">
+              <div className="flex items-center gap-1.5">
+                <Star size={14} className="text-amber-500 fill-amber-500" />
+                <span>4.9 Customer Rating</span>
+              </div>
+              <span className="hidden sm:inline text-slate-700">•</span>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle size={14} className="text-brand" />
+                <span>15,000+ Completed Tasks</span>
+              </div>
+              <span className="hidden sm:inline text-slate-700">•</span>
+              <div className="flex items-center gap-1.5">
+                <Clock size={14} className="text-indigo-400" />
+                <span>30 Mins Average Arrival</span>
+              </div>
             </div>
           </div>
 
@@ -937,8 +983,8 @@ export default function Home() {
               <ul className="space-y-2.5">
                 <li>
                   <span className="text-slate-500 block font-bold">Customer Care Desk:</span> 
-                  <a href="tel:+94112345678" className="font-bold text-sm mt-0.5 text-white hover:text-brand transition-colors block">
-                    +94 11 234 5678
+                  <a href="tel:+94762580832" className="font-bold text-sm mt-0.5 text-white hover:text-brand transition-colors block">
+                    076 258 0832
                   </a>
                 </li>
                 <li>
@@ -1465,8 +1511,10 @@ export default function Home() {
                   <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user.phone || '+94 77 123 4567'}</span>
                 </div>
                 <div className="flex justify-between items-center py-1.5 border-b border-slate-800/10">
-                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Service Coordinates</span>
-                  <span className={`font-mono text-[10px] text-brand font-bold`}>6.9271° N, 79.8612° E</span>
+                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Home Address</span>
+                  <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'} text-[11px] truncate max-w-[180px]`} title={user.address || 'Galle Road, Colombo 03, Sri Lanka'}>
+                    {user.address || 'Galle Road, Colombo 03, Sri Lanka'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center py-1.5">
                   <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Member Since</span>
