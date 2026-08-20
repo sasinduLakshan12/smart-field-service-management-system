@@ -203,7 +203,7 @@ exports.getWorkOrder = async (req, res, next) => {
 // @access  Private (Technician/Admin/Dispatcher)
 exports.updateWorkOrderStatus = async (req, res, next) => {
   try {
-    const { status, notes, parts, laborCost, attachments } = req.body;
+    const { status, notes, parts, laborCost, attachments, eta, lat, lng } = req.body;
     const filter = { _id: req.params.id, ...req.tenantFilter };
 
     // If technician, ensure they are the assigned technician
@@ -247,6 +247,10 @@ exports.updateWorkOrderStatus = async (req, res, next) => {
 
     if (notes) workOrder.notes = notes;
     if (attachments) workOrder.attachments = attachments;
+    if (eta !== undefined) workOrder.eta = eta;
+    if (lat !== undefined && lng !== undefined) {
+      workOrder.currentCoordinates = { lat, lng };
+    }
 
     await workOrder.save();
 

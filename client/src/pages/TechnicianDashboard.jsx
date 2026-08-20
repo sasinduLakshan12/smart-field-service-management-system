@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useAuthStore } from '../store/authStore';
 import { 
   ClipboardList, 
@@ -14,14 +16,29 @@ import {
   FileText, 
   AlertCircle,
   Plus,
-  Trash
+  Trash,
+  X
 } from 'lucide-react';
+
+// Fix Leaflet Default Icon path resolution issues in bundlers
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 export default function TechnicianDashboard() {
   const { accessToken, user } = useAuthStore();
   const [workOrders, setWorkOrders] = useState([]);
   const [profile, setProfile] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  
+  // ETA modal trigger
+  const [showEtaModal, setShowEtaModal] = useState(false);
+  const [etaOrderId, setEtaOrderId] = useState(null);
+  const [selectedEta, setSelectedEta] = useState(15); // default 15 mins
+
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -30,6 +47,8 @@ export default function TechnicianDashboard() {
   const [laborCost, setLaborCost] = useState('');
   const [workNotes, setWorkNotes] = useState('');
   const [parts, setParts] = useState([{ name: '', quantity: 1, price: 0 }]);
+
+  const mapInstances = useRef({});
 
   const fetchProfileAndOrders = async () => {
     try {
@@ -66,6 +85,53 @@ export default function TechnicianDashboard() {
     fetchProfileAndOrders();
   }, [accessToken, user]);
 
+  // Mount Leaflet maps on work orders
+  useEffect(() => {
+    if (workOrders.length > 0) {
+      workOrders.forEach(order => {
+        const mapContainerId = `tech-map-${order._id}`;
+        const container = document.getElementById(mapContainerId);
+        
+        if (container) {
+          // Destroy existing map instance if initialized
+          if (mapInstances.current[order._id]) {
+            mapInstances.current[order._id].remove();
+          }
+
+          // Customer coordinates
+          const custLat = order.requestId?.coordinates?.lat || 6.9271;
+          const custLng = order.requestId?.coordinates?.lng || 79.8612;
+
+          const map = L.map(mapContainerId).setView([custLat, custLng], 14);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+          }).addTo(map);
+
+          // Add Customer destination marker
+          const customerIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/619/619034.png', // Home Icon
+            iconSize: [30, 30],
+            iconAnchor: [15, 30],
+          });
+          L.marker([custLat, custLng], { icon: customerIcon }).addTo(map)
+            .bindPopup(`Customer Jobsite: ${order.customerId?.userId?.name}`).openPopup();
+
+          mapInstances.current[order._id] = map;
+        }
+      });
+    }
+
+    return () => {
+      // Cleanup maps on unmount
+      Object.keys(mapInstances.current).forEach(id => {
+        if (mapInstances.current[id]) {
+          mapInstances.current[id].remove();
+        }
+      });
+      mapInstances.current = {};
+    };
+  }, [workOrders]);
+
   const handleToggleStatus = async () => {
     if (!profile) return;
     const nextStatus = profile.availabilityStatus === 'available' ? 'offline' : 'available';
@@ -98,6 +164,7 @@ export default function TechnicianDashboard() {
       );
       if (response.data.success) {
         setSelectedOrder(null);
+        setShowEtaModal(false);
         setFeedback({ success: true, message: `Job updated to: ${newStatus}` });
         fetchProfileAndOrders();
       }
@@ -106,6 +173,28 @@ export default function TechnicianDashboard() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleOpenTravel = (orderId) => {
+    setEtaOrderId(orderId);
+    setSelectedEta(15); // default
+    setShowEtaModal(true);
+  };
+
+  const handleConfirmTravel = () => {
+    const order = workOrders.find(o => o._id === etaOrderId);
+    const destLat = order?.requestId?.coordinates?.lat || 6.9271;
+    const destLng = order?.requestId?.coordinates?.lng || 79.8612;
+
+    // Start technician traveling coordinates slightly further away (simulate approach)
+    const initialTechLat = destLat + 0.012;
+    const initialTechLng = destLng + 0.012;
+
+    handleStatusUpdate(etaOrderId, 'Travelling', {
+      eta: Number(selectedEta),
+      lat: initialTechLat,
+      lng: initialTechLng
+    });
   };
 
   const handleAddPart = () => {
@@ -158,10 +247,10 @@ export default function TechnicianDashboard() {
           <button
             onClick={handleToggleStatus}
             disabled={actionLoading}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
               profile.availabilityStatus === 'available'
                 ? 'bg-brand/10 border-brand/20 text-brand shadow-[0_0_12px_rgba(0,168,150,0.2)]'
-                : 'bg-amber-950/20 border-amber-500/20 text-amber-500'
+                : 'bg-amber-955/20 border-amber-500/20 text-amber-500'
             }`}
           >
             <Power size={14} />
@@ -195,7 +284,7 @@ export default function TechnicianDashboard() {
                     <Clock size={12} /> {new Date(order.scheduledDate).toLocaleString()}
                   </p>
                 </div>
-                <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold border capitalize ${
+                <span className={`inline-flex px-2.5 py-1 rounded-lg text-[9px] font-bold border capitalize ${
                   order.status === 'Completed'
                     ? 'bg-brand-light text-brand border-brand/20'
                     : order.status === 'In Progress'
@@ -206,20 +295,37 @@ export default function TechnicianDashboard() {
                 </span>
               </div>
 
+              {/* Destination Map Container if active */}
+              {(order.status === 'Travelling' || order.status === 'Accepted' || order.status === 'Arrived' || order.status === 'In Progress') && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Job Destination Map</p>
+                  <div 
+                    id={`tech-map-${order._id}`} 
+                    className="h-44 w-full rounded-2xl border border-slate-800 bg-slate-950/60 overflow-hidden z-10 relative"
+                  ></div>
+                </div>
+              )}
+
               {/* Customer Info Box */}
               <div className="bg-slate-950/30 border border-slate-850/40 rounded-2xl p-4 text-xs space-y-2.5">
-                <div className="flex items-center gap-2 text-slate-300 font-bold">
+                <div className="flex items-center gap-2 text-slate-350 font-bold">
                   <MapPin size={14} className="text-brand shrink-0" />
                   <span>{order.customerId?.userId?.name || 'Customer Profile'}</span>
                 </div>
-                <div className="text-slate-400 pl-5 leading-relaxed font-semibold">
+                <div className="text-slate-300 pl-5 leading-relaxed font-semibold">
                   <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider mb-0.5">Address & Phone:</span>
-                  {order.customerId?.phone} | {order.customerId?.addresses?.[0] || 'On-site'}
+                  {order.customerId?.phone} | {order.address || order.customerId?.addresses?.[0] || 'On-site'}
                 </div>
-                <div className="text-slate-400 pl-5 leading-relaxed font-semibold">
+                <div className="text-slate-300 pl-5 leading-relaxed font-semibold">
                   <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider mb-0.5">Dispatch notes:</span>
                   {order.notes || 'No dispatch notes'}
                 </div>
+                {order.eta && (
+                  <div className="text-brand pl-5 font-bold flex items-center gap-1.5">
+                    <Clock size={13} />
+                    <span>Travel ETA Sent: {order.eta} mins</span>
+                  </div>
+                )}
               </div>
 
               {/* Workflow status controls */}
@@ -228,7 +334,7 @@ export default function TechnicianDashboard() {
                   <button
                     disabled={actionLoading}
                     onClick={() => handleStatusUpdate(order._id, 'Accepted')}
-                    className="w-full bg-brand hover:bg-brand-hover text-white font-bold py-3.5 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                    className="w-full bg-brand hover:bg-brand-hover text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <CheckCircle size={15} /> Accept Job Assignment
                   </button>
@@ -237,8 +343,8 @@ export default function TechnicianDashboard() {
                 {order.status === 'Accepted' && (
                   <button
                     disabled={actionLoading}
-                    onClick={() => handleStatusUpdate(order._id, 'Travelling')}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                    onClick={() => handleOpenTravel(order._id)}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Navigation size={15} /> Start Travel to Location
                   </button>
@@ -248,7 +354,7 @@ export default function TechnicianDashboard() {
                   <button
                     disabled={actionLoading}
                     onClick={() => handleStatusUpdate(order._id, 'Arrived')}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <MapPin size={15} /> Confirm Arrival
                   </button>
@@ -258,7 +364,7 @@ export default function TechnicianDashboard() {
                   <button
                     disabled={actionLoading}
                     onClick={() => handleStatusUpdate(order._id, 'In Progress')}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Play size={15} /> Start Execution (Work)
                   </button>
@@ -272,7 +378,7 @@ export default function TechnicianDashboard() {
                       setParts([{ name: '', quantity: 1, price: 0 }]);
                       setSelectedOrder(order);
                     }}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Check size={15} /> Report Completion & Invoice
                   </button>
@@ -282,6 +388,46 @@ export default function TechnicianDashboard() {
           ))
         )}
       </div>
+
+      {/* Travelling ETA Selection Dropdown Modal */}
+      {showEtaModal && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="max-w-xs w-full bg-slate-900 border border-slate-800 rounded-3xl p-5 text-slate-200 space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+              <h4 className="font-bold text-white text-xs uppercase tracking-wide">Select Travel ETA</h4>
+              <button onClick={() => setShowEtaModal(false)} className="text-slate-400 hover:text-white">
+                <X size={14} />
+              </button>
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">
+                How many minutes will you take?
+              </label>
+              <select
+                value={selectedEta}
+                onChange={(e) => setSelectedEta(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none"
+              >
+                <option value="5">5 minutes</option>
+                <option value="10">10 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="20">20 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">1 hour</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleConfirmTravel}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition-all cursor-pointer"
+            >
+              Confirm & Start Travelling
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Completion & Billing Form Glass Modal */}
       {selectedOrder && (
@@ -303,7 +449,7 @@ export default function TechnicianDashboard() {
                     required
                     value={laborCost}
                     onChange={(e) => setLaborCost(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white focus:outline-none"
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-955/40 border border-slate-805 rounded-xl text-xs text-white focus:outline-none"
                     placeholder="e.g. 1500"
                   />
                   <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -319,7 +465,7 @@ export default function TechnicianDashboard() {
                   required
                   value={workNotes}
                   onChange={(e) => setWorkNotes(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-950/40 border border-slate-800/60 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-955/40 border border-slate-805 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none"
                   placeholder="Explain what repair or work was completed..."
                 ></textarea>
               </div>
@@ -332,7 +478,7 @@ export default function TechnicianDashboard() {
                   <button
                     type="button"
                     onClick={handleAddPart}
-                    className="text-[10px] text-brand hover:underline font-bold flex items-center gap-0.5"
+                    className="text-[10px] text-brand hover:underline font-bold flex items-center gap-0.5 cursor-pointer"
                   >
                     <Plus size={12} /> Add Part
                   </button>
@@ -364,7 +510,7 @@ export default function TechnicianDashboard() {
                       <button
                         type="button"
                         onClick={() => handleRemovePart(idx)}
-                        className="p-2 text-slate-500 hover:text-red-400 transition-colors"
+                        className="p-2 text-slate-550 hover:text-red-400 transition-colors cursor-pointer"
                       >
                         <Trash size={14} />
                       </button>
@@ -377,7 +523,7 @@ export default function TechnicianDashboard() {
                 <button
                   type="button"
                   onClick={() => setSelectedOrder(null)}
-                  className="px-4 py-2 border border-slate-800/60 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 transition-colors"
+                  className="px-4 py-2 border border-slate-800/60 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
