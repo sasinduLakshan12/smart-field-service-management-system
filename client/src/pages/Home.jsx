@@ -33,6 +33,7 @@ export default function Home() {
 
   // Mobile Drawer State
   const [showMobileNav, setShowMobileNav] = useState(false);
+  const [showPolicyModal, setShowPolicyModal] = useState(null); // 'privacy' | 'terms' | null
 
   // Detail Modal State (Provider detail lookup before booking)
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -398,13 +399,13 @@ export default function Home() {
   return (
     <div 
       className={`min-h-screen bg-cover bg-center bg-no-repeat relative transition-colors duration-200 overflow-x-hidden font-sans pb-10 ${
-        isDark ? 'bg-slate-955 text-slate-100' : 'bg-slate-100 text-slate-900'
+        isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'
       }`}
       style={{ backgroundImage: "url('/landing_bg.jpg')" }}
     >
       {/* Heavy dark/light mask overlay for high readability contrast */}
-      <div className={`absolute inset-0 z-0 backdrop-blur-[4px] transition-all duration-200 ${
-        isDark ? 'bg-slate-950/85' : 'bg-slate-100/75'
+      <div className={`absolute inset-0 z-0 backdrop-blur-[5px] transition-all duration-200 ${
+        isDark ? 'bg-slate-950/85' : 'bg-slate-50/95'
       }`}></div>
 
       <div className="relative z-10 flex flex-col justify-between min-h-screen">
@@ -424,7 +425,7 @@ export default function Home() {
             </h1>
             
             {/* Nav links */}
-            <nav className={`hidden md:flex items-center gap-8 text-[11px] uppercase tracking-wider font-extrabold ${isDark ? 'text-slate-350' : 'text-slate-650'}`}>
+            <nav className={`hidden md:flex items-center gap-8 text-[11px] uppercase tracking-wider font-extrabold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
               <a href="#home" className="hover:text-brand transition-colors relative py-1 group">
                 Home
                 <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-brand transition-all group-hover:w-full"></span>
@@ -608,7 +609,7 @@ export default function Home() {
               Smart Field Service <br />
               <span className="text-brand">Management Platform</span>
             </h2>
-            <p className={`text-xs md:text-sm leading-relaxed max-w-xl mx-auto font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+            <p className={`text-xs md:text-sm leading-relaxed max-w-xl mx-auto font-semibold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
               Optimize your mobile workforce, assign jobs instantly with skill-matching algorithms, track technicians live on maps, and automate billing on task resolution.
             </p>
 
@@ -899,8 +900,20 @@ export default function Home() {
           <div className="max-w-6xl mx-auto px-6 border-t border-slate-900 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase font-bold tracking-wider">
             <span>© {new Date().getFullYear()} FieldFlow Inc. All Rights Reserved.</span>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-white">Privacy Policy</a>
-              <a href="#" className="hover:text-white">Terms of Use</a>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); setShowPolicyModal('privacy'); }}
+                className="hover:text-white transition-colors"
+              >
+                Privacy Policy
+              </a>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); setShowPolicyModal('terms'); }}
+                className="hover:text-white transition-colors"
+              >
+                Terms of Use
+              </a>
             </div>
           </div>
         </footer>
@@ -1282,6 +1295,73 @@ export default function Home() {
                 className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-855 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Dismiss Tracking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 4. PRIVACY POLICY / TERMS OF USE DYNAMIC GLASS MODAL */}
+      {showPolicyModal && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className={`max-w-md w-full rounded-[32px] shadow-2xl border overflow-hidden relative ${
+            isDark ? 'bg-slate-900/95 border-slate-800 text-slate-200' : 'bg-white border-slate-205 text-slate-850'
+          }`}>
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand to-transparent"></div>
+            
+            <div className="p-6 border-b border-slate-100/10 flex items-center justify-between">
+              <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                {showPolicyModal === 'privacy' ? 'Privacy Policy' : 'Terms of Use'}
+              </h3>
+              <button 
+                onClick={() => setShowPolicyModal(null)}
+                className={`p-1 rounded-lg border cursor-pointer ${
+                  isDark ? 'bg-slate-950 border-slate-850 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'
+                }`}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto text-xs leading-relaxed">
+              {showPolicyModal === 'privacy' ? (
+                <>
+                  <p className="font-bold text-[10px] text-brand uppercase tracking-wider">1. Data Collection</p>
+                  <p className="text-slate-500">
+                    We collect essential information like your phone number, service address coordinates, and name to coordinate job matches with technicians.
+                  </p>
+                  <p className="font-bold text-[10px] text-brand uppercase tracking-wider">2. Live Location Sharing</p>
+                  <p className="text-slate-405">
+                    When tracking a technician en route, coordinates are accessed temporarily in real-time to facilitate ETA simulation and dispatch maps.
+                  </p>
+                  <p className="font-bold text-[10px] text-brand uppercase tracking-wider">3. Security Assurance</p>
+                  <p className="text-slate-405">
+                    All client-technician profiles and invoice ledger sheets are cryptographically hashed and isolated securely per company tenants.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-bold text-[10px] text-brand uppercase tracking-wider">1. Acceptable Use</p>
+                  <p className="text-slate-405">
+                    Users must provide authentic and precise GPS job coordinates when booking field service work orders. Mock or false requests are strictly prohibited.
+                  </p>
+                  <p className="font-bold text-[10px] text-brand uppercase tracking-wider">2. Technician Code of Conduct</p>
+                  <p className="text-slate-405">
+                    Technicians are required to send honest arrival ETA updates and maintain updated availability states on their mobile dispatcher consoles.
+                  </p>
+                  <p className="font-bold text-[10px] text-brand uppercase tracking-wider">3. Cost & Billing Settlement</p>
+                  <p className="text-slate-405">
+                    Payments are auto-calculated dynamically based on task labor hours and reported spare part ledgers upon invoice completion.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="p-5 bg-slate-900/10 border-t border-slate-800/10 flex justify-end">
+              <button
+                onClick={() => setShowPolicyModal(null)}
+                className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md"
+              >
+                Accept & Close
               </button>
             </div>
           </div>
