@@ -634,22 +634,43 @@ export default function Home() {
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/10 to-transparent"></div>
                     </div>
 
+                    {/* Content Body with clear readable colors */}
                     <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
                       <div className="space-y-2">
-                        <div className="text-lg font-black text-brand tracking-tight">
-                          LKR {service.price?.toLocaleString()}
+                        {/* High Contrast Bright Price Label & Rating */}
+                        <div className="flex justify-between items-center">
+                          <span className="text-lg font-black text-brand tracking-tight">
+                            LKR {service.price?.toLocaleString()}
+                          </span>
+                          <span className="text-[10px] font-bold flex items-center gap-0.5 text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-lg">
+                            <Star size={10} className="fill-amber-500" /> 4.8 (85+)
+                          </span>
                         </div>
+
                         <h4 className={`font-extrabold text-sm tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{service.name}</h4>
+                        
+                        {/* Skill Tags */}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {service.requiredSkills?.map((skill, idx) => (
+                            <span key={idx} className="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[9px] font-bold uppercase tracking-wider">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+
                         <p className={`text-xs font-medium leading-relaxed line-clamp-3 ${isDark ? 'text-slate-200' : 'text-slate-600'}`}>
-                          {service.description || 'Professional field solution completed by our certified service provider.'}
+                          {(!service.description || service.description.toLowerCase() === 'call me') 
+                            ? 'Complete troubleshooting, certified component replacements, and comprehensive system inspection by our local specialists.'
+                            : service.description
+                          }
                         </p>
                       </div>
 
-                      <div className="flex justify-between items-center pt-4 border-t border-slate-100/10 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                        <div className="flex items-center gap-1.5 text-slate-455">
-                          <Clock size={13} className="text-slate-455" />
-                          <span>{service.estimatedDuration || service.duration || 60} Mins</span>
-                        </div>
+                      {/* Footer values */}
+                      <div className="flex justify-between items-center pt-4 border-t border-slate-100/10">
+                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                          Certified Service
+                        </span>
                         <button
                           onClick={() => handleOpenDetailModal(service)}
                           className="flex items-center gap-1 bg-brand text-white font-extrabold px-3.5 py-2 rounded-xl hover:bg-brand-hover hover:scale-[1.02] shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all cursor-pointer text-xs"
@@ -664,42 +685,77 @@ export default function Home() {
             )}
           </div>
 
-          {/* Feature Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-slate-800/10">
-            <div className={`p-6 rounded-3xl border shadow-[0_12px_30px_rgba(0,0,0,0.04)] text-left space-y-3 ${
-              isDark ? 'bg-slate-900/70 border-slate-800/60' : 'bg-white border-slate-200'
-            }`}>
-              <div className="h-10 w-10 rounded-xl bg-brand-light text-brand flex items-center justify-center border border-brand/20">
-                <Briefcase size={20} />
-              </div>
-              <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Smart Dispatching</h4>
-              <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                Intelligent scheduler filters availability and technician skills automatically matching customer requirements.
-              </p>
+          {/* How It Works Section */}
+          <div className="space-y-8 pt-8 border-t border-slate-805/10">
+            <div className="text-center space-y-1">
+              <h3 className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>How It Works</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Simple 4-step process to resolve your task</p>
             </div>
 
-            <div className={`p-6 rounded-3xl border shadow-[0_12px_30px_rgba(0,0,0,0.04)] text-left space-y-3 ${
-              isDark ? 'bg-slate-900/70 border-slate-800/60' : 'bg-white border-slate-200'
-            }`}>
-              <div className="h-10 w-10 rounded-xl bg-indigo-950/30 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
-                <Shield size={20} />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {/* Step 1 */}
+              <div className={`p-6 rounded-3xl border shadow-lg text-center space-y-4 relative ${
+                isDark ? 'bg-slate-900/70 border-slate-800/60' : 'bg-white border-slate-200'
+              }`}>
+                <div className="absolute top-4 left-4 h-6 w-6 rounded-full bg-brand/10 text-brand text-xs font-black flex items-center justify-center">
+                  1
+                </div>
+                <div className="h-12 w-12 rounded-2xl bg-brand-light text-brand flex items-center justify-center border border-brand/20 mx-auto">
+                  <Search size={20} />
+                </div>
+                <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Select Service</h4>
+                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-650'}`}>
+                  Browse or search our verified catalog for Electrical, Plumbing, AC, or Pump services.
+                </p>
               </div>
-              <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Tenant Boundaries</h4>
-              <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                Multi-tenant architecture automatically isolates customer directories, orders, catalog and billing ledgers securely.
-              </p>
-            </div>
 
-            <div className={`p-6 rounded-3xl border shadow-[0_12px_30px_rgba(0,0,0,0.04)] text-left space-y-3 ${
-              isDark ? 'bg-slate-900/70 border-slate-800/60' : 'bg-white border-slate-200'
-            }`}>
-              <div className="h-10 w-10 rounded-xl bg-amber-950/30 text-amber-400 flex items-center justify-center border border-amber-500/20">
-                <Clock size={20} />
+              {/* Step 2 */}
+              <div className={`p-6 rounded-3xl border shadow-lg text-center space-y-4 relative ${
+                isDark ? 'bg-slate-900/70 border-slate-800/60' : 'bg-white border-slate-200'
+              }`}>
+                <div className="absolute top-4 left-4 h-6 w-6 rounded-full bg-brand/10 text-brand text-xs font-black flex items-center justify-center">
+                  2
+                </div>
+                <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20 mx-auto">
+                  <Star size={20} className="fill-amber-500" />
+                </div>
+                <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Choose Provider</h4>
+                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-650'}`}>
+                  Compare technician profiles, star ratings, reviews, and their live area locations on map.
+                </p>
               </div>
-              <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Auto-Billing Ledger</h4>
-              <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                Calculates task labor and parts costs dynamically generating PDF-ready invoices on status completed callback.
-              </p>
+
+              {/* Step 3 */}
+              <div className={`p-6 rounded-3xl border shadow-lg text-center space-y-4 relative ${
+                isDark ? 'bg-slate-900/70 border-slate-800/60' : 'bg-white border-slate-200'
+              }`}>
+                <div className="absolute top-4 left-4 h-6 w-6 rounded-full bg-brand/10 text-brand text-xs font-black flex items-center justify-center">
+                  3
+                </div>
+                <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20 mx-auto">
+                  <Navigation size={20} />
+                </div>
+                <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Track Live Dispatch</h4>
+                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-650'}`}>
+                  Watch your assigned technician travel to your door on a live map with dynamic ETA.
+                </p>
+              </div>
+
+              {/* Step 4 */}
+              <div className={`p-6 rounded-3xl border shadow-lg text-center space-y-4 relative ${
+                isDark ? 'bg-slate-900/70 border-slate-800/60' : 'bg-white border-slate-200'
+              }`}>
+                <div className="absolute top-4 left-4 h-6 w-6 rounded-full bg-brand/10 text-brand text-xs font-black flex items-center justify-center">
+                  4
+                </div>
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-450 flex items-center justify-center border border-emerald-500/20 mx-auto">
+                  <CheckCircle size={20} />
+                </div>
+                <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Secure Resolution</h4>
+                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-650'}`}>
+                  Confirm completed task, view automatically generated cost invoice, and rate service.
+                </p>
+              </div>
             </div>
           </div>
         </main>
