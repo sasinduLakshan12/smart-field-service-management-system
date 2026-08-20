@@ -760,7 +760,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="p-5 bg-slate-955/35 border-t border-slate-800 flex justify-end gap-3">
+            <div className="p-5 bg-slate-900/35 border-t border-slate-800 flex justify-end gap-3">
               <button
                 onClick={() => setShowDetailModal(false)}
                 className="px-5 py-2.5 border border-slate-800 rounded-xl text-xs font-bold text-slate-450 hover:bg-slate-900 transition-colors"
@@ -867,7 +867,7 @@ export default function Home() {
                 </div>
                 <div 
                   id="booking-map-container" 
-                  className="h-44 w-full rounded-2xl border border-slate-800 bg-slate-955 overflow-hidden z-10 relative shadow-inner"
+                  className="h-44 w-full rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden z-10 relative shadow-inner"
                 ></div>
               </div>
 
@@ -1009,7 +1009,7 @@ export default function Home() {
               </div>
               <button 
                 onClick={() => setShowTracking(false)}
-                className="text-slate-400 hover:text-white p-1 bg-slate-955 rounded-lg border border-slate-800 hover:bg-slate-900 transition-all"
+                className="text-slate-400 hover:text-white p-1 bg-slate-950 rounded-lg border border-slate-800 hover:bg-slate-900 transition-all"
               >
                 <X size={16} />
               </button>
