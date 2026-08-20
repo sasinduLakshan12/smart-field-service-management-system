@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'; // Vite-native Leaflet CSS import to fix black map tiles bug
-import { Briefcase, Shield, Clock, ArrowRight, Star, ClipboardList, MapPin, Calendar, CheckCircle, AlertCircle, X, LogOut, Check, ChevronRight, Phone, Navigation, Eye, Search, Filter, Menu, MessageSquare, ShieldAlert, Sun, Moon } from 'lucide-react';
+import { Briefcase, Shield, Clock, ArrowRight, Star, ClipboardList, MapPin, Calendar, CheckCircle, AlertCircle, X, LogOut, Check, ChevronRight, Phone, Navigation, Eye, Search, Filter, Menu, ShieldAlert, Sun, Moon, User } from 'lucide-react';
 
 // Fix Leaflet Default Icon path resolution issues in bundlers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -35,6 +35,11 @@ export default function Home() {
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [showPolicyModal, setShowPolicyModal] = useState(null); // 'privacy' | 'terms' | null
 
+  // Profile Dropdown & Modal state
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const dropdownRef = useRef(null);
+
   // Detail Modal State (Provider detail lookup before booking)
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
@@ -63,6 +68,19 @@ export default function Home() {
   const providerMapRef = useRef(null);
   const trackingMapRef = useRef(null);
   const trackingIntervalRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Fetch public services catalogue
   const fetchServices = () => {
@@ -399,7 +417,7 @@ export default function Home() {
   return (
     <div 
       className={`min-h-screen bg-cover bg-center bg-no-repeat relative transition-colors duration-200 overflow-x-hidden font-sans pb-10 ${
-        isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'
+        isDark ? 'bg-slate-955 text-slate-100' : 'bg-slate-100 text-slate-900'
       }`}
       style={{ backgroundImage: "url('/landing_bg.jpg')" }}
     >
@@ -413,8 +431,8 @@ export default function Home() {
         {/* Premium Sticky Floating Pill-shaped Glass Navbar */}
         <header className={`sticky top-4 z-40 max-w-6xl w-[calc(100%-2rem)] mx-auto rounded-2xl transition-all shadow-xl px-6 border ${
           isDark 
-            ? 'bg-slate-950/80 border-slate-800/80' 
-            : 'bg-white/90 border-slate-200 shadow-md'
+            ? 'bg-slate-955/85 border-slate-800/80 shadow-slate-950/40' 
+            : 'bg-white/90 border-slate-205 shadow-slate-200/50'
         }`}>
           <div className="w-full h-16 flex justify-between items-center">
             <h1 className={`text-lg font-black tracking-tight flex items-center gap-2 select-none ${isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -458,48 +476,74 @@ export default function Home() {
                 {isDark ? <Sun size={14} className="text-amber-500" /> : <Moon size={14} />}
               </button>
 
-              {/* Desktop Auth Section (Hidden on Mobile screens to avoid wrapping) */}
-              <div className="hidden md:flex items-center gap-3">
+              {/* Desktop Auth Section with Interactive Profile Dropdown */}
+              <div className="hidden md:flex items-center gap-3 relative" ref={dropdownRef}>
                 {user ? (
-                  user.role === 'customer' ? (
-                    <>
-                      <span className={`text-xs font-extrabold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                        Hi, {user.name.split(' ')[0]}
-                      </span>
-                      <button
-                        onClick={() => {
-                          fetchMyBookings();
-                          setShowMyBookings(true);
-                        }}
-                        className="bg-brand/10 hover:bg-brand/20 text-brand text-xs font-bold py-2 px-3.5 rounded-xl border border-brand/20 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
-                      >
-                        <ClipboardList size={13} /> My Bookings
-                      </button>
-                      <button
-                        onClick={logout}
-                        title="Sign Out"
-                        className="p-2 rounded-xl bg-red-950/20 hover:bg-red-955/40 text-red-450 border border-red-900/30 transition-all cursor-pointer"
-                      >
-                        <LogOut size={13} />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link
-                        to="/dashboard"
-                        className="bg-brand hover:bg-brand-hover text-white text-xs font-bold py-2 px-4 rounded-xl shadow-[0_4px_12px_rgba(0,168,150,0.3)] transition-all flex items-center gap-1.5"
-                      >
-                        Console <ArrowRight size={13} />
-                      </Link>
-                      <button
-                        onClick={logout}
-                        title="Sign Out"
-                        className="p-2 rounded-xl bg-red-955/30 hover:bg-red-955/50 text-red-400 border border-red-900/30 transition-all cursor-pointer"
-                      >
-                        <LogOut size={13} />
-                      </button>
-                    </>
-                  )
+                  <>
+                    {/* User Profile Avatar Trigger */}
+                    <button
+                      onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                      className={`h-9 w-9 rounded-full flex items-center justify-center font-bold text-xs border cursor-pointer hover:scale-[1.03] transition-all ${
+                        isDark 
+                          ? 'bg-brand/10 border-brand/35 text-brand shadow-[0_0_12px_rgba(0,168,150,0.25)]' 
+                          : 'bg-brand/20 border-brand/40 text-brand-hover shadow-sm'
+                      }`}
+                    >
+                      {user.name.slice(0, 2).toUpperCase()}
+                    </button>
+
+                    {/* Interactive Dropdown Menu */}
+                    {showProfileDropdown && (
+                      <div className={`absolute right-0 top-12 w-52 rounded-2xl border p-4 shadow-2xl space-y-2 z-50 text-xs font-medium animate-fadeIn ${
+                        isDark 
+                          ? 'bg-slate-900 border-slate-805 text-slate-205' 
+                          : 'bg-white border-slate-200 text-slate-800'
+                      }`}>
+                        <div className="border-b border-slate-800/10 pb-2">
+                          <p className={`font-black text-sm truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{user.name}</p>
+                          <p className="text-[9px] text-brand font-extrabold uppercase tracking-wider mt-0.5 capitalize">{user.role?.replace('_', ' ')} Profile</p>
+                        </div>
+
+                        <div className="space-y-1 pt-1">
+                          <button
+                            onClick={() => {
+                              setShowProfileDropdown(false);
+                              setShowProfileModal(true);
+                            }}
+                            className="w-full flex items-center gap-2 py-2 text-left hover:text-brand transition-colors cursor-pointer font-bold"
+                          >
+                            <User size={14} className="text-brand" />
+                            My Profile
+                          </button>
+
+                          {user.role === 'customer' && (
+                            <button
+                              onClick={() => {
+                                setShowProfileDropdown(false);
+                                fetchMyBookings();
+                                setShowMyBookings(true);
+                              }}
+                              className="w-full flex items-center gap-2 py-2 text-left hover:text-brand transition-colors cursor-pointer font-bold"
+                            >
+                              <ClipboardList size={14} className="text-brand" />
+                              My Bookings
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => {
+                              setShowProfileDropdown(false);
+                              logout();
+                            }}
+                            className="w-full flex items-center gap-2 pt-2.5 border-t border-slate-800/10 text-red-500 hover:text-red-400 transition-colors text-left cursor-pointer font-extrabold"
+                          >
+                            <LogOut size={14} />
+                            Sign Out
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <Link
                     to="/login"
@@ -549,6 +593,15 @@ export default function Home() {
                     <button
                       onClick={() => {
                         setShowMobileNav(false);
+                        setShowProfileModal(true);
+                      }}
+                      className="w-full bg-brand/10 text-brand text-xs font-bold py-3 rounded-xl border border-brand/20 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <User size={14} /> My Profile
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMobileNav(false);
                         fetchMyBookings();
                         setShowMyBookings(true);
                       }}
@@ -561,7 +614,7 @@ export default function Home() {
                         setShowMobileNav(false);
                         logout();
                       }}
-                      className="w-full py-3 bg-red-950/20 text-red-400 border border-red-900/30 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+                      className="w-full py-3 bg-red-950/20 text-red-500 border border-red-900/30 rounded-xl text-xs font-black flex items-center justify-center gap-1.5"
                     >
                       <LogOut size={14} /> Sign Out
                     </button>
@@ -580,7 +633,7 @@ export default function Home() {
                         setShowMobileNav(false);
                         logout();
                       }}
-                      className="w-full py-3 bg-red-950/20 text-red-400 border border-red-900/30 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+                      className="w-full py-3 bg-red-950/20 text-red-500 border border-red-900/30 rounded-xl text-xs font-black flex items-center justify-center gap-1.5"
                     >
                       <LogOut size={14} /> Sign Out
                     </button>
@@ -716,7 +769,7 @@ export default function Home() {
                           ))}
                         </div>
 
-                        <p className={`text-xs font-medium leading-relaxed line-clamp-3 ${isDark ? 'text-slate-200' : 'text-slate-600'}`}>
+                        <p className={`text-xs font-medium leading-relaxed line-clamp-3 ${isDark ? 'text-slate-200' : 'text-slate-655'}`}>
                           {(!service.description || service.description.toLowerCase() === 'call me') 
                             ? 'Complete troubleshooting, certified component replacements, and comprehensive system inspection by our local specialists.'
                             : service.description
@@ -762,7 +815,7 @@ export default function Home() {
                   <Search size={20} />
                 </div>
                 <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Select Service</h4>
-                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-650'}`}>
+                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-655'}`}>
                   Browse or search our verified catalog for Electrical, Plumbing, AC, or Pump services.
                 </p>
               </div>
@@ -778,7 +831,7 @@ export default function Home() {
                   <Star size={20} className="fill-amber-500" />
                 </div>
                 <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Choose Provider</h4>
-                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-650'}`}>
+                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-655'}`}>
                   Compare technician profiles, star ratings, reviews, and their live area locations on map.
                 </p>
               </div>
@@ -794,7 +847,7 @@ export default function Home() {
                   <Navigation size={20} />
                 </div>
                 <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Track Live Dispatch</h4>
-                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-650'}`}>
+                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-655'}`}>
                   Watch your assigned technician travel to your door on a live map with dynamic ETA.
                 </p>
               </div>
@@ -810,7 +863,7 @@ export default function Home() {
                   <CheckCircle size={20} />
                 </div>
                 <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Secure Resolution</h4>
-                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-650'}`}>
+                <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-400' : 'text-slate-655'}`}>
                   Confirm completed task, view automatically generated cost invoice, and rate service.
                 </p>
               </div>
@@ -819,7 +872,7 @@ export default function Home() {
         </main>
 
         {/* Dynamic Corporate SaaS Footer */}
-        <footer className="border-t pt-16 pb-8 text-xs bg-slate-950 border-slate-900 text-slate-400 shadow-2xl">
+        <footer className="border-t pt-16 pb-8 text-xs bg-slate-955 border-slate-900 text-slate-400 shadow-2xl">
           <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div className="space-y-4">
               <h1 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
@@ -900,20 +953,8 @@ export default function Home() {
           <div className="max-w-6xl mx-auto px-6 border-t border-slate-900 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase font-bold tracking-wider">
             <span>© {new Date().getFullYear()} FieldFlow Inc. All Rights Reserved.</span>
             <div className="flex gap-6">
-              <a 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); setShowPolicyModal('privacy'); }}
-                className="hover:text-white transition-colors"
-              >
-                Privacy Policy
-              </a>
-              <a 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); setShowPolicyModal('terms'); }}
-                className="hover:text-white transition-colors"
-              >
-                Terms of Use
-              </a>
+              <a href="#" className="hover:text-white">Privacy Policy</a>
+              <a href="#" className="hover:text-white">Terms of Use</a>
             </div>
           </div>
         </footer>
@@ -971,7 +1012,7 @@ export default function Home() {
               </div>
 
               {!user && (
-                <div className="bg-amber-950/20 text-amber-500 p-3.5 rounded-xl border border-amber-900/35 text-[10px] font-bold flex items-center gap-2">
+                <div className="bg-amber-955/20 text-amber-500 p-3.5 rounded-xl border border-amber-900/35 text-[10px] font-bold flex items-center gap-2">
                   <ShieldAlert size={14} className="shrink-0" />
                   <span>You must be logged into your customer portal to submit service requests.</span>
                 </div>
@@ -1000,7 +1041,7 @@ export default function Home() {
       {showBookModal && selectedService && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className={`max-w-md w-full rounded-[32px] shadow-2xl border overflow-hidden relative ${
-            isDark ? 'bg-slate-900/95 border-slate-800 text-slate-200' : 'bg-white border-slate-205 text-slate-850'
+            isDark ? 'bg-slate-900/95 border-slate-800 text-slate-200' : 'bg-white border-slate-205 text-slate-855'
           }`}>
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand to-transparent"></div>
             
@@ -1012,7 +1053,7 @@ export default function Home() {
               <button 
                 onClick={() => setShowBookModal(false)}
                 className={`p-1 rounded-lg border transition-all cursor-pointer ${
-                  isDark ? 'bg-slate-955 border-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 border-slate-205 text-slate-500'
+                  isDark ? 'bg-slate-955 border-slate-800 text-slate-400 hover:text-white' : 'bg-slate-105 border-slate-205 text-slate-500'
                 }`}
               >
                 <X size={16} />
@@ -1022,7 +1063,7 @@ export default function Home() {
             <form onSubmit={handleBookingSubmit} className="p-6 space-y-4 max-h-[68vh] overflow-y-auto">
               {feedback && (
                 <div className={`p-4 rounded-2xl text-xs border flex items-center gap-2 ${
-                  feedback.success ? 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30' : 'bg-red-950/20 text-red-400 border-red-900/30'
+                  feedback.success ? 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30' : 'bg-red-950/20 text-red-450 border-red-900/30'
                 }`}>
                   {feedback.success ? <Check size={14} /> : <AlertCircle size={14} />}
                   <span className="font-medium">{feedback.message}</span>
@@ -1056,13 +1097,13 @@ export default function Home() {
                     value={preferredDate}
                     onChange={(e) => setPreferredDate(e.target.value)}
                     className={`w-full px-4 py-3 border rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand/45 ${
-                      isDark ? 'bg-slate-950/60 border-slate-800 text-white' : 'bg-white border-slate-205 text-slate-900'
+                      isDark ? 'bg-slate-955/60 border-slate-800 text-white' : 'bg-white border-slate-205 text-slate-900'
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <label className="block text-[10px] font-bold text-slate-555 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                     <Phone size={10} className="text-brand" /> Contact Phone
                   </label>
                   <input
@@ -1071,7 +1112,7 @@ export default function Home() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className={`w-full px-4 py-3 border rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand/45 ${
-                      isDark ? 'bg-slate-950/60 border-slate-800 text-white' : 'bg-white border-slate-205 text-slate-900'
+                      isDark ? 'bg-slate-955/60 border-slate-800 text-white' : 'bg-white border-slate-205 text-slate-900'
                     }`}
                     placeholder="e.g. 0771234567"
                   />
@@ -1152,7 +1193,7 @@ export default function Home() {
               <button 
                 onClick={() => setShowMyBookings(false)}
                 className={`p-1 rounded-lg border cursor-pointer ${
-                  isDark ? 'bg-slate-900/50 border-slate-800 text-slate-400' : 'bg-slate-100 border-slate-205 text-slate-500'
+                  isDark ? 'bg-slate-900/50 border-slate-800 text-slate-400' : 'bg-slate-105 border-slate-205 text-slate-500'
                 }`}
               >
                 <X size={16} />
@@ -1222,7 +1263,7 @@ export default function Home() {
             <div className="p-5 bg-slate-900/10 border-t border-slate-800/10 flex justify-end">
               <button
                 onClick={() => setShowMyBookings(false)}
-                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-855 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Close Portal
               </button>
@@ -1300,6 +1341,7 @@ export default function Home() {
           </div>
         </div>
       )}
+
       {/* 4. PRIVACY POLICY / TERMS OF USE DYNAMIC GLASS MODAL */}
       {showPolicyModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
@@ -1315,7 +1357,7 @@ export default function Home() {
               <button 
                 onClick={() => setShowPolicyModal(null)}
                 className={`p-1 rounded-lg border cursor-pointer ${
-                  isDark ? 'bg-slate-950 border-slate-850 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'
+                  isDark ? 'bg-slate-950 border-slate-855 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'
                 }`}
               >
                 <X size={15} />
@@ -1362,6 +1404,83 @@ export default function Home() {
                 className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md"
               >
                 Accept & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. GORGEOUS CUSTOMER PROFILE DETAILS MODAL */}
+      {showProfileModal && user && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className={`max-w-md w-full rounded-[32px] shadow-2xl border overflow-hidden relative ${
+            isDark ? 'bg-slate-900/95 border-slate-805 text-slate-200' : 'bg-white border-slate-205 text-slate-850'
+          }`}>
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand to-transparent"></div>
+            
+            <div className="p-6 border-b border-slate-100/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <User size={18} className="text-brand" />
+                <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>My FieldFlow Profile</h3>
+              </div>
+              <button 
+                onClick={() => setShowProfileModal(false)}
+                className={`p-1 rounded-lg border cursor-pointer ${
+                  isDark ? 'bg-slate-950 border-slate-850 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'
+                }`}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6 text-center">
+              {/* Profile Card Header with Initials badge */}
+              <div className="space-y-3">
+                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-brand to-emerald-500 text-white flex items-center justify-center text-2xl font-black mx-auto shadow-[0_8px_25px_rgba(0,168,150,0.3)]">
+                  {user.name.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h4 className={`font-extrabold text-lg tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{user.name}</h4>
+                  <div className="flex justify-center items-center gap-1.5 mt-1">
+                    <span className="bg-brand/10 text-brand text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                      {user.role?.replace('_', ' ')}
+                    </span>
+                    <span className="bg-emerald-500/10 text-emerald-500 text-[9px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-0.5 uppercase tracking-wider">
+                      <Check size={8} className="stroke-[3]" /> Verified Account
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Legal Profile Identity Specifications */}
+              <div className={`p-5 rounded-2xl border text-left space-y-3 text-xs ${
+                isDark ? 'bg-slate-950/40 border-slate-850' : 'bg-slate-50 border-slate-205 shadow-inner'
+              }`}>
+                <div className="flex justify-between items-center py-1.5 border-b border-slate-800/10">
+                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Email Address</span>
+                  <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user.email || 'piyumi@gmail.com'}</span>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-slate-800/10">
+                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Phone Contact</span>
+                  <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user.phone || '+94 77 123 4567'}</span>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-slate-800/10">
+                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Service Coordinates</span>
+                  <span className={`font-mono text-[10px] text-brand font-bold`}>6.9271° N, 79.8612° E</span>
+                </div>
+                <div className="flex justify-between items-center py-1.5">
+                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Member Since</span>
+                  <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>August 20, 2026</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 bg-slate-900/10 border-t border-slate-800/10 flex justify-end">
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="px-6 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md"
+              >
+                Close Profile
               </button>
             </div>
           </div>
