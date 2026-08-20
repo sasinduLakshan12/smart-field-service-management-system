@@ -2,9 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'; // Vite-native Leaflet CSS import to fix black map tiles bug
-import { Briefcase, Shield, Clock, ArrowRight, Star, ClipboardList, MapPin, Calendar, CheckCircle, AlertCircle, X, LogOut, Check, ChevronRight, Phone, Navigation, Eye, Search, Filter, Menu, MessageSquare, ShieldAlert } from 'lucide-react';
+import { Briefcase, Shield, Clock, ArrowRight, Star, ClipboardList, MapPin, Calendar, CheckCircle, AlertCircle, X, LogOut, Check, ChevronRight, Phone, Navigation, Eye, Search, Filter, Menu, MessageSquare, ShieldAlert, Sun, Moon } from 'lucide-react';
 
 // Fix Leaflet Default Icon path resolution issues in bundlers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -16,6 +17,7 @@ L.Icon.Default.mergeOptions({
 
 export default function Home() {
   const { user, accessToken, logout } = useAuthStore();
+  const { theme, toggleTheme, initTheme } = useThemeStore();
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
   
@@ -91,6 +93,7 @@ export default function Home() {
   };
 
   useEffect(() => {
+    initTheme();
     fetchServices();
     if (user && user.role === 'customer') {
       fetchMyBookings();
@@ -155,7 +158,7 @@ export default function Home() {
         }).addTo(map);
 
         const techIcon = L.icon({
-          iconUrl: 'https://cdn-icons-png.flaticon.com/512/1995/1995470.png', // Van/Tool icon
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/1995/1995470.png',
           iconSize: [32, 32],
           iconAnchor: [16, 16],
         });
@@ -180,7 +183,6 @@ export default function Home() {
         const customerLat = trackingBooking.coordinates?.lat || 6.9271;
         const customerLng = trackingBooking.coordinates?.lng || 79.8612;
 
-        // Start coordinates
         let techLat = trackingBooking.currentCoordinates?.lat || (customerLat + 0.012);
         let techLng = trackingBooking.currentCoordinates?.lng || (customerLng + 0.012);
 
@@ -250,7 +252,6 @@ export default function Home() {
 
   const handleOpenDetailModal = (service) => {
     setSelectedService(service);
-    // Create random mock technician review ratings
     setSelectedProvider({
       name: `Lanka Pro ${service.requiredSkills?.[0] || 'Tech'} Provider`,
       rating: (4.5 + Math.random() * 0.4).toFixed(1),
@@ -282,7 +283,6 @@ export default function Home() {
     setShowTracking(true);
   };
 
-  // Auto-detect user coordinates and pre-fill address fields
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
       setFeedback({ success: false, message: 'Geolocation is not supported by your browser' });
@@ -323,7 +323,7 @@ export default function Home() {
       const response = await axios.post('http://localhost:5000/api/v1/service-requests', {
         serviceId: selectedService._id,
         problemDescription,
-        priority: 'medium', // Default to medium
+        priority: 'medium',
         preferredDate,
         address,
         phone,
@@ -347,7 +347,6 @@ export default function Home() {
     }
   };
 
-  // Map category/skills to stock images for high-end aesthetic (Robust matching)
   const getServiceImage = (service) => {
     if (service.imageUrl) return service.imageUrl;
 
@@ -378,7 +377,6 @@ export default function Home() {
     return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80';
   };
 
-  // Filter service listing dynamically
   const getFilteredServices = () => {
     return services.filter(service => {
       const matchesSearch = 
@@ -395,28 +393,38 @@ export default function Home() {
 
   const categoryOptions = ['All', 'AC Repair', 'Plumbing', 'Electrical', 'Generator Repair', 'Appliance Repair'];
 
+  const isDark = theme === 'dark';
+
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat relative text-slate-100 transition-colors duration-200 overflow-x-hidden font-sans pb-10"
+      className={`min-h-screen bg-cover bg-center bg-no-repeat relative transition-colors duration-200 overflow-x-hidden font-sans pb-10 ${
+        isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'
+      }`}
       style={{ backgroundImage: "url('/landing_bg.jpg')" }}
     >
-      {/* Heavy dark mask overlay for high readability contrast */}
-      <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[3px] z-0"></div>
+      {/* Heavy dark/light mask overlay for high readability contrast */}
+      <div className={`absolute inset-0 z-0 backdrop-blur-[4px] transition-all duration-200 ${
+        isDark ? 'bg-slate-950/85' : 'bg-slate-100/75'
+      }`}></div>
 
       <div className="relative z-10 flex flex-col justify-between min-h-screen">
         
         {/* Premium Sticky Floating Pill-shaped Glass Navbar */}
-        <header className="sticky top-4 z-40 max-w-6xl w-[calc(100%-2rem)] mx-auto bg-slate-950/80 backdrop-blur-lg border border-slate-800/80 rounded-2xl transition-all shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] px-6">
+        <header className={`sticky top-4 z-40 max-w-6xl w-[calc(100%-2rem)] mx-auto rounded-2xl transition-all shadow-xl px-6 border ${
+          isDark 
+            ? 'bg-slate-950/85 border-slate-800/80' 
+            : 'bg-white/90 border-slate-200 shadow-md'
+        }`}>
           <div className="w-full h-16 flex justify-between items-center">
-            <h1 className="text-lg font-black text-white tracking-tight flex items-center gap-2 select-none">
+            <h1 className={`text-lg font-black tracking-tight flex items-center gap-2 select-none ${isDark ? 'text-white' : 'text-slate-900'}`}>
               <div className="h-7 w-7 rounded-lg bg-brand flex items-center justify-center text-white font-black text-xs shadow-[0_0_10px_rgba(0,168,150,0.5)]">
                 F
               </div>
               FieldFlow
             </h1>
             
-            {/* Brightened Nav links */}
-            <nav className="hidden md:flex items-center gap-8 text-[11px] uppercase tracking-wider font-extrabold text-slate-350">
+            {/* Nav links */}
+            <nav className={`hidden md:flex items-center gap-8 text-[11px] uppercase tracking-wider font-extrabold ${isDark ? 'text-slate-350' : 'text-slate-650'}`}>
               <a href="#home" className="hover:text-brand transition-colors relative py-1 group">
                 Home
                 <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-brand transition-all group-hover:w-full"></span>
@@ -436,10 +444,23 @@ export default function Home() {
             </nav>
             
             <div className="flex items-center gap-4">
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                  isDark 
+                    ? 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white' 
+                    : 'bg-white border-slate-205 text-slate-600 hover:text-slate-950 shadow-xs'
+                }`}
+                title="Toggle Dark/Light Mode"
+              >
+                {isDark ? <Sun size={14} className="text-amber-500" /> : <Moon size={14} />}
+              </button>
+
               {user ? (
                 user.role === 'customer' ? (
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-white font-extrabold hidden sm:inline">
+                    <span className={`text-xs font-extrabold hidden sm:inline ${isDark ? 'text-white' : 'text-slate-800'}`}>
                       Hi, {user.name.split(' ')[0]}
                     </span>
                     <button
@@ -447,14 +468,14 @@ export default function Home() {
                         fetchMyBookings();
                         setShowMyBookings(true);
                       }}
-                      className="bg-brand/10 hover:bg-brand/20 text-brand text-xs font-bold py-2 px-3.5 rounded-xl border border-brand/20 transition-all flex items-center gap-1.5 shadow-sm"
+                      className="bg-brand/10 hover:bg-brand/20 text-brand text-xs font-bold py-2 px-3.5 rounded-xl border border-brand/20 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                     >
                       <ClipboardList size={13} /> My Bookings
                     </button>
                     <button
                       onClick={logout}
                       title="Sign Out"
-                      className="p-2 rounded-xl bg-red-955/30 hover:bg-red-955/50 text-red-400 border border-red-900/30 transition-all"
+                      className="p-2 rounded-xl bg-red-950/20 hover:bg-red-955/40 text-red-450 border border-red-900/30 transition-all cursor-pointer"
                     >
                       <LogOut size={13} />
                     </button>
@@ -470,7 +491,7 @@ export default function Home() {
                     <button
                       onClick={logout}
                       title="Sign Out"
-                      className="p-2 rounded-xl bg-red-955/30 hover:bg-red-955/50 text-red-400 border border-red-900/30 transition-all"
+                      className="p-2 rounded-xl bg-red-955/30 hover:bg-red-955/50 text-red-400 border border-red-900/30 transition-all cursor-pointer"
                     >
                       <LogOut size={13} />
                     </button>
@@ -488,7 +509,9 @@ export default function Home() {
               {/* Hamburger Menu Toggle on mobile screens */}
               <button
                 onClick={() => setShowMobileNav(!showMobileNav)}
-                className="p-2 rounded-xl bg-slate-900/60 hover:bg-slate-900 text-slate-400 border border-slate-800 transition-all md:hidden cursor-pointer"
+                className={`p-2 rounded-xl border transition-all md:hidden cursor-pointer ${
+                  isDark ? 'bg-slate-900/60 border-slate-800 text-slate-400' : 'bg-white border-slate-205 text-slate-650'
+                }`}
               >
                 <Menu size={16} />
               </button>
@@ -498,17 +521,19 @@ export default function Home() {
 
         {/* Mobile Navigation Drawer */}
         {showMobileNav && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-45 md:hidden flex flex-col justify-center items-center space-y-6 text-sm font-bold">
+          <div className={`fixed inset-0 z-45 md:hidden flex flex-col justify-center items-center space-y-6 text-sm font-bold backdrop-blur-md ${
+            isDark ? 'bg-slate-950/90 text-slate-100' : 'bg-white/95 text-slate-900'
+          }`}>
             <button 
               onClick={() => setShowMobileNav(false)}
               className="absolute top-6 right-6 p-2 text-slate-400 hover:text-white"
             >
               <X size={20} />
             </button>
-            <a href="#home" onClick={() => setShowMobileNav(false)} className="hover:text-brand transition-colors">Home</a>
-            <a href="#services" onClick={() => setShowMobileNav(false)} className="hover:text-brand transition-colors">Services</a>
-            <a href="#features" onClick={() => setShowMobileNav(false)} className="hover:text-brand transition-colors">Platform</a>
-            <Link to="/apply" onClick={() => setShowMobileNav(false)} className="hover:text-brand transition-colors">Apply as Tech</Link>
+            <a href="#home" onClick={() => setShowMobileNav(false)} className="hover:text-brand">Home</a>
+            <a href="#services" onClick={() => setShowMobileNav(false)} className="hover:text-brand">Services</a>
+            <a href="#features" onClick={() => setShowMobileNav(false)} className="hover:text-brand">Platform</a>
+            <Link to="/apply" onClick={() => setShowMobileNav(false)} className="hover:text-brand">Apply as Tech</Link>
             {!user && (
               <Link to="/login" onClick={() => setShowMobileNav(false)} className="bg-brand text-white px-6 py-2 rounded-xl shadow-md">Sign In</Link>
             )}
@@ -521,11 +546,11 @@ export default function Home() {
             <span className="inline-flex px-3 py-1 rounded-full text-[10px] font-bold bg-brand-light text-brand border border-brand/20 uppercase tracking-widest backdrop-blur-md">
               Next-Gen Workforce Hub
             </span>
-            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+            <h2 className={`text-4xl md:text-5xl font-black tracking-tight leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
               Smart Field Service <br />
               <span className="text-brand">Management Platform</span>
             </h2>
-            <p className="text-slate-205 text-xs md:text-sm leading-relaxed max-w-xl mx-auto font-semibold font-sans">
+            <p className={`text-xs md:text-sm leading-relaxed max-w-xl mx-auto font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
               Optimize your mobile workforce, assign jobs instantly with skill-matching algorithms, track technicians live on maps, and automate billing on task resolution.
             </p>
 
@@ -539,11 +564,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* DYNAMIC CUSTOMER SERVICES SECTION WITH DYNAMIC FILTERS & SEARCH */}
+          {/* DYNAMIC CUSTOMER SERVICES SECTION */}
           <div id="services" className="space-y-8 pt-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-800 pb-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-800/20 pb-6">
               <div className="text-left space-y-1">
-                <h3 className="text-2xl font-black text-white">Our Field Services</h3>
+                <h3 className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Our Field Services</h3>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Explore catalog listings and find local experts</p>
               </div>
 
@@ -555,20 +580,28 @@ export default function Home() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search standard service..."
-                    className="w-full md:w-56 pl-9 pr-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-white focus:outline-none"
+                    className={`w-full md:w-56 pl-9 pr-4 py-2.5 border rounded-xl text-xs focus:outline-none ${
+                      isDark 
+                        ? 'bg-slate-950/60 border-slate-800 text-white' 
+                        : 'bg-white border-slate-205 text-slate-900 shadow-sm'
+                    }`}
                   />
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 </div>
 
-                <div className="relative flex items-center gap-1.5 bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-1.5">
+                <div className={`relative flex items-center gap-1.5 border rounded-xl px-3 py-1.5 ${
+                  isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-205 shadow-sm'
+                }`}>
                   <Filter size={12} className="text-slate-500" />
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="bg-transparent border-none text-xs text-slate-300 focus:outline-none cursor-pointer"
+                    className={`bg-transparent border-none text-xs focus:outline-none cursor-pointer ${
+                      isDark ? 'text-slate-300' : 'text-slate-700 font-semibold'
+                    }`}
                   >
                     {categoryOptions.map(cat => (
-                      <option key={cat} value={cat} className="bg-slate-900 text-white text-xs">{cat}</option>
+                      <option key={cat} value={cat} className={isDark ? 'bg-slate-900 text-white text-xs' : 'bg-white text-slate-900 text-xs'}>{cat}</option>
                     ))}
                   </select>
                 </div>
@@ -576,7 +609,9 @@ export default function Home() {
             </div>
 
             {getFilteredServices().length === 0 ? (
-              <div className="text-center py-16 text-slate-500 font-semibold bg-slate-900/40 rounded-3xl border border-slate-800/60 max-w-lg mx-auto">
+              <div className={`text-center py-16 font-semibold rounded-3xl border max-w-lg mx-auto ${
+                isDark ? 'bg-slate-900/40 border-slate-800 text-slate-500' : 'bg-white border-slate-200 text-slate-500 shadow-sm'
+              }`}>
                 No matching service categories are found.
               </div>
             ) : (
@@ -584,7 +619,11 @@ export default function Home() {
                 {getFilteredServices().map((service) => (
                   <div 
                     key={service._id} 
-                    className="bg-slate-900/90 backdrop-blur-md rounded-[32px] overflow-hidden border border-slate-800 shadow-2xl flex flex-col justify-between hover:scale-[1.015] hover:border-brand/50 hover:shadow-[0_12px_40px_rgba(0,168,150,0.2)] transition-all duration-200 group"
+                    className={`rounded-[32px] overflow-hidden border flex flex-col justify-between hover:scale-[1.015] hover:border-brand hover:shadow-[0_20px_50px_rgba(0,168,150,0.15)] transition-all duration-300 group ${
+                      isDark 
+                        ? 'bg-slate-900/90 border-slate-800 shadow-2xl' 
+                        : 'bg-white border-slate-200 shadow-[0_15px_35px_rgba(0,0,0,0.06)]'
+                    }`}
                   >
                     <div className="h-44 w-full overflow-hidden relative">
                       <img 
@@ -592,7 +631,7 @@ export default function Home() {
                         alt={service.name} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/10 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/10 to-transparent"></div>
                     </div>
 
                     <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
@@ -600,14 +639,14 @@ export default function Home() {
                         <div className="text-lg font-black text-brand tracking-tight">
                           LKR {service.price?.toLocaleString()}
                         </div>
-                        <h4 className="font-extrabold text-white text-sm tracking-tight">{service.name}</h4>
-                        <p className="text-xs text-slate-200 font-medium leading-relaxed line-clamp-3">
+                        <h4 className={`font-extrabold text-sm tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{service.name}</h4>
+                        <p className={`text-xs font-medium leading-relaxed line-clamp-3 ${isDark ? 'text-slate-200' : 'text-slate-600'}`}>
                           {service.description || 'Professional field solution completed by our certified service provider.'}
                         </p>
                       </div>
 
-                      <div className="flex justify-between items-center pt-4 border-t border-slate-800/80 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                        <div className="flex items-center gap-1.5 text-slate-355">
+                      <div className="flex justify-between items-center pt-4 border-t border-slate-100/10 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        <div className="flex items-center gap-1.5 text-slate-455">
                           <Clock size={13} className="text-slate-455" />
                           <span>{service.estimatedDuration || service.duration || 60} Mins</span>
                         </div>
@@ -626,41 +665,47 @@ export default function Home() {
           </div>
 
           {/* Feature Grid */}
-          <div id="features" className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-slate-800">
-            <div className="bg-slate-900/70 backdrop-blur-md p-6 rounded-3xl border border-slate-800/60 shadow-lg text-left space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-slate-800/10">
+            <div className={`p-6 rounded-3xl border shadow-[0_12px_30px_rgba(0,0,0,0.04)] text-left space-y-3 ${
+              isDark ? 'bg-slate-900/70 border-slate-800/60' : 'bg-white border-slate-200'
+            }`}>
               <div className="h-10 w-10 rounded-xl bg-brand-light text-brand flex items-center justify-center border border-brand/20">
                 <Briefcase size={20} />
               </div>
-              <h4 className="font-bold text-white text-sm">Smart Dispatching</h4>
-              <p className="text-xs text-slate-300 leading-relaxed font-semibold">
+              <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Smart Dispatching</h4>
+              <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                 Intelligent scheduler filters availability and technician skills automatically matching customer requirements.
               </p>
             </div>
 
-            <div className="bg-slate-900/70 backdrop-blur-md p-6 rounded-3xl border border-slate-800/60 shadow-lg text-left space-y-3">
+            <div className={`p-6 rounded-3xl border shadow-[0_12px_30px_rgba(0,0,0,0.04)] text-left space-y-3 ${
+              isDark ? 'bg-slate-900/70 border-slate-800/60' : 'bg-white border-slate-200'
+            }`}>
               <div className="h-10 w-10 rounded-xl bg-indigo-950/30 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
                 <Shield size={20} />
               </div>
-              <h4 className="font-bold text-white text-sm">Tenant Boundaries</h4>
-              <p className="text-xs text-slate-300 leading-relaxed font-semibold">
+              <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Tenant Boundaries</h4>
+              <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                 Multi-tenant architecture automatically isolates customer directories, orders, catalog and billing ledgers securely.
               </p>
             </div>
 
-            <div className="bg-slate-900/70 backdrop-blur-md p-6 rounded-3xl border border-slate-800/60 shadow-lg text-left space-y-3">
+            <div className={`p-6 rounded-3xl border shadow-[0_12px_30px_rgba(0,0,0,0.04)] text-left space-y-3 ${
+              isDark ? 'bg-slate-900/70 border-slate-800/60' : 'bg-white border-slate-200'
+            }`}>
               <div className="h-10 w-10 rounded-xl bg-amber-950/30 text-amber-400 flex items-center justify-center border border-amber-500/20">
                 <Clock size={20} />
               </div>
-              <h4 className="font-bold text-white text-sm">Auto-Billing Ledger</h4>
-              <p className="text-xs text-slate-300 leading-relaxed font-semibold">
+              <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Auto-Billing Ledger</h4>
+              <p className={`text-xs leading-relaxed font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                 Calculates task labor and parts costs dynamically generating PDF-ready invoices on status completed callback.
               </p>
             </div>
           </div>
         </main>
 
-        {/* Dynamic Corporate SaaS Footer */}
-        <footer className="bg-slate-950/60 backdrop-blur-md border-t border-slate-900/80 pt-16 pb-8 text-slate-400 text-xs">
+        {/* Dynamic Corporate SaaS Footer (Persistent Dark Style) */}
+        <footer className="border-t pt-16 pb-8 text-xs bg-slate-950 border-slate-900 text-slate-400 shadow-2xl">
           <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div className="space-y-4">
               <h1 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
@@ -672,8 +717,8 @@ export default function Home() {
               </p>
             </div>
             <div>
-              <h5 className="font-extrabold text-white text-xs uppercase tracking-wider mb-4">Services</h5>
-              <ul className="space-y-2.5">
+              <h5 className="font-extrabold text-xs uppercase tracking-wider mb-4 text-white">Services</h5>
+              <ul className="space-y-2.5 font-semibold">
                 <li><a href="#services" className="hover:text-brand">AC Maintenance</a></li>
                 <li><a href="#services" className="hover:text-brand">Electrical Rewiring</a></li>
                 <li><a href="#services" className="hover:text-brand">Plumbing & Pumps</a></li>
@@ -681,22 +726,22 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h5 className="font-extrabold text-white text-xs uppercase tracking-wider mb-4">Portal Links</h5>
-              <ul className="space-y-2.5">
+              <h5 className="font-extrabold text-xs uppercase tracking-wider mb-4 text-white">Portal Links</h5>
+              <ul className="space-y-2.5 font-semibold">
                 <li><Link to="/login" className="hover:text-brand">Customer Login</Link></li>
                 <li><Link to="/apply" className="hover:text-brand">Technician Registration</Link></li>
                 <li><Link to="/login" className="hover:text-brand">Admin Console</Link></li>
               </ul>
             </div>
             <div>
-              <h5 className="font-extrabold text-white text-xs uppercase tracking-wider mb-4">Help & Support</h5>
+              <h5 className="font-extrabold text-xs uppercase tracking-wider mb-4 text-white">Help & Support</h5>
               <ul className="space-y-2.5">
-                <li><span className="text-slate-450 block">Customer Care Desk:</span> <p className="font-bold text-white mt-0.5">+94 11 234 5678</p></li>
-                <li><span className="text-slate-450 block">Email support:</span> <p className="font-bold text-white mt-0.5">help@fieldflow.lk</p></li>
+                <li><span className="text-slate-500 block font-bold">Customer Care Desk:</span> <p className="font-bold text-sm mt-0.5 text-white">+94 11 234 5678</p></li>
+                <li><span className="text-slate-500 block font-bold">Email support:</span> <p className="font-bold text-sm mt-0.5 text-white">help@fieldflow.lk</p></li>
               </ul>
             </div>
           </div>
-          <div className="max-w-6xl mx-auto px-6 border-t border-slate-900/60 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase font-bold tracking-wider">
+          <div className="max-w-6xl mx-auto px-6 border-t border-slate-900 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase font-bold tracking-wider">
             <span>© {new Date().getFullYear()} FieldFlow Inc. All Rights Reserved.</span>
             <div className="flex gap-6">
               <a href="#" className="hover:text-white">Privacy Policy</a>
@@ -707,37 +752,43 @@ export default function Home() {
 
       </div>
 
-      {/* NEW STEP: PROVIDER DETAILS & RATING PREVIEW MODAL */}
+      {/* PROVIDER DETAILS & RATING PREVIEW MODAL */}
       {showDetailModal && selectedService && selectedProvider && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="max-w-md w-full bg-slate-900/95 backdrop-blur-md rounded-[32px] shadow-2xl border border-slate-800 overflow-hidden text-slate-200 relative">
+          <div className={`max-w-md w-full rounded-[32px] shadow-2xl border overflow-hidden relative ${
+            isDark ? 'bg-slate-900/95 border-slate-800 text-slate-200' : 'bg-white border-slate-205 text-slate-850'
+          }`}>
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand to-transparent"></div>
             
-            <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+            <div className="p-6 border-b border-slate-100/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Briefcase size={18} className="text-brand" />
-                <h3 className="font-bold text-white text-sm">Select Service Provider</h3>
+                <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Select Service Provider</h3>
               </div>
               <button 
                 onClick={() => setShowDetailModal(false)}
-                className="text-slate-400 hover:text-white p-1 bg-slate-950 rounded-lg border border-slate-850"
+                className={`p-1 rounded-lg border cursor-pointer ${
+                  isDark ? 'bg-slate-950 border-slate-850 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'
+                }`}
               >
                 <X size={15} />
               </button>
             </div>
 
             <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
-              <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-850 space-y-3">
+              <div className={`p-4 rounded-2xl border space-y-3 ${
+                isDark ? 'bg-slate-955/50 border-slate-850' : 'bg-slate-50 border-slate-200 shadow-sm'
+              }`}>
                 <div className="flex justify-between items-center">
-                  <h4 className="font-extrabold text-white text-sm">{selectedProvider.name}</h4>
+                  <h4 className={`font-extrabold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{selectedProvider.name}</h4>
                   <span className="bg-brand/10 text-brand text-xs font-black px-2 py-0.5 rounded-lg flex items-center gap-1">
                     <Star size={12} className="fill-brand" /> {selectedProvider.rating}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-450 font-bold uppercase tracking-wider flex items-center gap-1">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1">
                   <Phone size={10} className="text-slate-500" /> Phone: {selectedProvider.phone}
                 </p>
-                <p className="text-slate-300 text-xs italic font-medium">
+                <p className="text-xs italic font-medium">
                   "{selectedProvider.recentFeedback}"
                 </p>
               </div>
@@ -751,25 +802,24 @@ export default function Home() {
                 ></div>
               </div>
 
-              {/* Booking warnings */}
               {!user && (
-                <div className="bg-amber-950/20 text-amber-400 p-3.5 rounded-xl border border-amber-900/35 text-[10px] font-bold flex items-center gap-2">
+                <div className="bg-amber-950/20 text-amber-500 p-3.5 rounded-xl border border-amber-900/35 text-[10px] font-bold flex items-center gap-2">
                   <ShieldAlert size={14} className="shrink-0" />
                   <span>You must be logged into your customer portal to submit service requests.</span>
                 </div>
               )}
             </div>
 
-            <div className="p-5 bg-slate-900/35 border-t border-slate-800 flex justify-end gap-3">
+            <div className="p-5 bg-slate-900/10 border-t border-slate-800/10 flex justify-end gap-3">
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="px-5 py-2.5 border border-slate-800 rounded-xl text-xs font-bold text-slate-450 hover:bg-slate-900 transition-colors"
+                className="px-5 py-2.5 border border-slate-205 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 Close
               </button>
               <button
                 onClick={handleProceedToBook}
-                className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-bold shadow-md transition-all"
+                className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer"
               >
                 Proceed to Book Service
               </button>
@@ -781,17 +831,21 @@ export default function Home() {
       {/* 1. BOOK SERVICE SIMPLIFIED PREMIUM GLASS MODAL */}
       {showBookModal && selectedService && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="max-w-md w-full bg-slate-900/95 backdrop-blur-md rounded-[32px] shadow-2xl border border-slate-800 overflow-hidden text-slate-200 relative">
+          <div className={`max-w-md w-full rounded-[32px] shadow-2xl border overflow-hidden relative ${
+            isDark ? 'bg-slate-900/95 border-slate-800 text-slate-200' : 'bg-white border-slate-205 text-slate-850'
+          }`}>
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand to-transparent"></div>
             
-            <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+            <div className="p-6 border-b border-slate-100/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5 text-brand">
                 <ClipboardList size={20} />
-                <h3 className="font-extrabold text-white text-sm">Book: {selectedService.name}</h3>
+                <h3 className={`font-extrabold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Book: {selectedService.name}</h3>
               </div>
               <button 
                 onClick={() => setShowBookModal(false)}
-                className="text-slate-400 hover:text-white p-1 bg-slate-950 rounded-lg border border-slate-850 hover:bg-slate-900 transition-all"
+                className={`p-1 rounded-lg border transition-all cursor-pointer ${
+                  isDark ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 border-slate-200 text-slate-500'
+                }`}
               >
                 <X size={16} />
               </button>
@@ -808,7 +862,7 @@ export default function Home() {
               )}
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                   Describe Your Problem
                 </label>
                 <textarea
@@ -816,14 +870,16 @@ export default function Home() {
                   rows="2"
                   value={problemDescription}
                   onChange={(e) => setProblemDescription(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand/45 focus:border-brand/45 transition-all"
+                  className={`w-full px-4 py-3 border rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand/45 transition-all ${
+                    isDark ? 'bg-slate-950/60 border-slate-800 text-white' : 'bg-white border-slate-205 text-slate-900'
+                  }`}
                   placeholder="Describe what needs repair/service..."
                 ></textarea>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                     Preferred Date
                   </label>
                   <input
@@ -831,12 +887,14 @@ export default function Home() {
                     required
                     value={preferredDate}
                     onChange={(e) => setPreferredDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand/45"
+                    className={`w-full px-4 py-3 border rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand/45 ${
+                      isDark ? 'bg-slate-950/60 border-slate-800 text-white' : 'bg-white border-slate-205 text-slate-900'
+                    }`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                     <Phone size={10} className="text-brand" /> Contact Phone
                   </label>
                   <input
@@ -844,7 +902,9 @@ export default function Home() {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-950/60 border border-slate-805 rounded-xl text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand/45"
+                    className={`w-full px-4 py-3 border rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand/45 ${
+                      isDark ? 'bg-slate-950/60 border-slate-800 text-white' : 'bg-white border-slate-205 text-slate-900'
+                    }`}
                     placeholder="e.g. 0771234567"
                   />
                 </div>
@@ -852,7 +912,7 @@ export default function Home() {
 
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     Select Location (Drag marker pin)
                   </label>
                   <button
@@ -872,7 +932,7 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                   Service Delivery Address
                 </label>
                 <input
@@ -880,23 +940,25 @@ export default function Home() {
                   required
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-950/60 border border-slate-805 rounded-xl text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand/45"
+                  className={`w-full px-4 py-3 border rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand/45 ${
+                    isDark ? 'bg-slate-950/60 border-slate-805 text-white' : 'bg-white border-slate-205 text-slate-900'
+                  }`}
                   placeholder="Street and City (Autofills on map pin drop)"
                 />
               </div>
 
-              <div className="flex gap-3 justify-end pt-3 border-t border-slate-800">
+              <div className="flex gap-3 justify-end pt-3 border-t border-slate-100/10">
                 <button
                   type="button"
                   onClick={() => setShowBookModal(false)}
-                  className="px-5 py-2.5 border border-slate-800 rounded-xl text-xs font-semibold text-slate-450 hover:bg-slate-900 transition-colors"
+                  className="px-5 py-2.5 border border-slate-205 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitLoading}
-                  className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-semibold shadow-[0_8px_16px_rgba(0,168,150,0.3)] hover:shadow-lg transition-all"
+                  className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-semibold shadow-[0_8px_16px_rgba(0,168,150,0.3)] hover:shadow-lg transition-all cursor-pointer"
                 >
                   {submitLoading ? 'Requesting...' : 'Request Booking'}
                 </button>
@@ -906,20 +968,24 @@ export default function Home() {
         </div>
       )}
 
-      {/* 2. CUSTOMER BOOKINGS HISTORY PREMIUM GLASS MODAL */}
+      {/* CUSTOMER BOOKINGS HISTORY PREMIUM GLASS MODAL */}
       {showMyBookings && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="max-w-2xl w-full bg-slate-900/95 backdrop-blur-md rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-slate-800 overflow-hidden text-slate-200 relative">
+          <div className={`max-w-2xl w-full rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border overflow-hidden relative ${
+            isDark ? 'bg-slate-900/95 border-slate-800 text-slate-200' : 'bg-white border-slate-205 text-slate-855'
+          }`}>
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand to-transparent"></div>
             
-            <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+            <div className="p-6 border-b border-slate-100/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5 text-brand">
                 <ClipboardList size={20} />
-                <h3 className="font-extrabold text-white text-sm">My Booked Services</h3>
+                <h3 className={`font-extrabold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>My Booked Services</h3>
               </div>
               <button 
                 onClick={() => setShowMyBookings(false)}
-                className="text-slate-400 hover:text-white p-1 bg-slate-900/50 rounded-lg border border-slate-800 hover:bg-slate-900 transition-all"
+                className={`p-1 rounded-lg border cursor-pointer ${
+                  isDark ? 'bg-slate-900/50 border-slate-800 text-slate-400' : 'bg-slate-100 border-slate-205 text-slate-500'
+                }`}
               >
                 <X size={16} />
               </button>
@@ -927,7 +993,7 @@ export default function Home() {
 
             <div className="p-6 overflow-y-auto max-h-[58vh] space-y-4">
               {myBookings.length === 0 ? (
-                <div className="text-center py-12 text-slate-550 font-semibold">
+                <div className="text-center py-12 text-slate-500 font-semibold">
                   You have not submitted any service bookings yet.
                 </div>
               ) : (
@@ -935,16 +1001,18 @@ export default function Home() {
                   {myBookings.map((booking) => (
                     <div 
                       key={booking._id} 
-                      className="bg-slate-950/50 border border-slate-850 p-5 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-3 text-xs shadow-lg"
+                      className={`border p-5 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-3 text-xs shadow-lg ${
+                        isDark ? 'bg-slate-950/50 border-slate-850' : 'bg-slate-50 border-slate-205'
+                      }`}
                     >
                       <div className="space-y-1.5">
-                        <div className="font-extrabold text-white text-sm tracking-tight flex items-center gap-2">
+                        <div className={`font-extrabold text-sm tracking-tight flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                           <span>{booking.serviceId?.name || 'Service Requested'}</span>
                         </div>
-                        <div className="text-slate-250 font-semibold flex items-center gap-1.5">
+                        <div className="text-slate-400 font-semibold flex items-center gap-1.5">
                           <MapPin size={13} className="text-brand shrink-0" /> {booking.address}
                         </div>
-                        <div className="text-[9px] text-slate-455 font-bold flex items-center gap-1.5 uppercase tracking-wider">
+                        <div className="text-[9px] text-slate-500 font-bold flex items-center gap-1.5 uppercase tracking-wider">
                           <Calendar size={13} className="text-slate-500" /> Pref. Date: {new Date(booking.preferredDate).toLocaleDateString()}
                         </div>
                       </div>
@@ -957,12 +1025,11 @@ export default function Home() {
                             ? 'bg-sky-950/20 text-sky-400 border-sky-500/20'
                             : booking.status === 'Travelling'
                             ? 'bg-indigo-950/20 text-indigo-400 border-indigo-500/20 animate-pulse'
-                            : 'bg-slate-950/30 text-slate-400 border-slate-500/20'
+                            : 'bg-slate-900/30 text-slate-550 border-slate-500/20'
                         }`}>
                           {booking.status === 'Travelling' ? 'ON THE WAY' : booking.status}
                         </span>
                         
-                        {/* Live Tracking link if status is Assigned, Accepted or Travelling */}
                         {(booking.status === 'Assigned' || booking.status === 'Travelling' || booking.status === 'Accepted' || booking.status === 'Arrived') && (
                           <button
                             onClick={() => handleOpenTracking(booking)}
@@ -973,7 +1040,7 @@ export default function Home() {
                         )}
 
                         {booking.serviceId?.price && (
-                          <div className="font-black text-white text-sm">
+                          <div className={`font-black text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>
                             LKR {booking.serviceId.price?.toLocaleString()}
                           </div>
                         )}
@@ -984,10 +1051,10 @@ export default function Home() {
               )}
             </div>
 
-            <div className="p-5 bg-slate-905/35 border-t border-slate-800 flex justify-end">
+            <div className="p-5 bg-slate-900/10 border-t border-slate-800/10 flex justify-end">
               <button
                 onClick={() => setShowMyBookings(false)}
-                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 rounded-xl text-xs font-bold transition-all"
+                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Close Portal
               </button>
@@ -996,38 +1063,42 @@ export default function Home() {
         </div>
       )}
 
-      {/* 3. REAL-TIME LIVE DISPATCH TRACKING MODAL */}
+      {/* REAL-TIME LIVE DISPATCH TRACKING MODAL */}
       {showTracking && trackingBooking && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="max-w-xl w-full bg-slate-900/95 backdrop-blur-md rounded-[32px] shadow-2xl border border-slate-800 overflow-hidden text-slate-200 relative">
+          <div className={`max-w-xl w-full rounded-[32px] shadow-2xl border overflow-hidden relative ${
+            isDark ? 'bg-slate-900/95 border-slate-800 text-slate-200' : 'bg-white border-slate-205 text-slate-850'
+          }`}>
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand to-transparent"></div>
             
-            <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+            <div className="p-6 border-b border-slate-100/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Navigation size={18} className="text-brand animate-pulse" />
-                <h3 className="font-extrabold text-white text-sm">Tracking Technician Dispatch</h3>
+                <h3 className={`font-extrabold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Tracking Technician Dispatch</h3>
               </div>
               <button 
                 onClick={() => setShowTracking(false)}
-                className="text-slate-400 hover:text-white p-1 bg-slate-950 rounded-lg border border-slate-800 hover:bg-slate-900 transition-all"
+                className="text-slate-400 hover:text-white p-1 bg-slate-905 rounded-lg border border-slate-800 hover:bg-slate-900 transition-all cursor-pointer"
               >
                 <X size={16} />
               </button>
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-3 gap-4 bg-slate-950/60 p-4 rounded-2xl border border-slate-850 text-center animate-pulse">
+              <div className={`grid grid-cols-3 gap-4 p-4 rounded-2xl border text-center animate-pulse ${
+                isDark ? 'bg-slate-950/60 border-slate-850' : 'bg-slate-50 border-slate-205'
+              }`}>
                 <div>
                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Status</p>
                   <p className="text-xs font-bold text-brand mt-0.5 capitalize">{trackingBooking.status}</p>
                 </div>
                 <div>
                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Distance</p>
-                  <p className="text-xs font-black text-white mt-0.5">{trackingDistance} km</p>
+                  <p className={`text-xs font-black mt-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>{trackingDistance} km</p>
                 </div>
                 <div>
                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">ETA</p>
-                  <p className="text-xs font-black text-white mt-0.5">
+                  <p className={`text-xs font-black mt-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {trackingBooking.status === 'Travelling' ? `${trackingEta} mins` : 'Waiting...'}
                   </p>
                 </div>
@@ -1038,7 +1109,9 @@ export default function Home() {
                 className="h-64 w-full rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden z-10 relative shadow-inner"
               ></div>
 
-              <div className="text-[10px] text-slate-300 font-semibold leading-relaxed bg-slate-900/40 p-3.5 rounded-xl border border-slate-800 flex items-center gap-2">
+              <div className={`text-[10px] font-semibold leading-relaxed p-3.5 rounded-xl border flex items-center gap-2 ${
+                isDark ? 'bg-slate-900/40 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-205 text-slate-700'
+              }`}>
                 <CheckCircle size={14} className="text-brand shrink-0" />
                 {trackingBooking.status === 'Travelling' ? (
                   <span>Technician updated: "I am en route to your location. Estimating arrival in {trackingEta} mins."</span>
@@ -1048,10 +1121,10 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="p-5 bg-slate-950/35 border-t border-slate-800 flex justify-end">
+            <div className="p-5 bg-slate-900/10 border-t border-slate-800/10 flex justify-end">
               <button
                 onClick={() => setShowTracking(false)}
-                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-855 text-slate-200 rounded-xl text-xs font-bold transition-all"
+                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-855 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Dismiss Tracking
               </button>
